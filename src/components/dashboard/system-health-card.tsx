@@ -16,48 +16,87 @@ export function SystemHealthCard() {
   }, [])
 
   const bars = [
-    { label: 'CPU Usage', value: 34, color: '#06B6D4', width: cpuWidth },
+    { label: 'CPU', value: 34, color: '#06B6D4', width: cpuWidth },
     { label: 'Memory', value: 67, color: '#0891B2', width: memWidth },
-    { label: 'Network I/O', value: 23, color: '#0E7490', width: netWidth },
+    { label: 'Network', value: 23, color: '#0E7490', width: netWidth },
+  ]
+
+  const chips = [
+    { label: 'Uptime', value: '99.7%', color: '#22D3EE', pulse: true },
+    { label: 'Connections', value: '55', color: '#06B6D4' },
+    { label: 'Errors', value: '0.3%', color: '#22D3EE' },
   ]
 
   return (
-    <div data-src="src/components/dashboard/system-health-card.tsx" className="rounded-xl p-4 relative overflow-hidden" style={{ background: 'rgba(26,26,26,0.6)', border: '1px solid rgba(51,51,51,0.5)' }}>
-      <div className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-xl" style={{ background: '#0891B2', opacity: 0.5 }} />
-      <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B] mb-3 flex items-center gap-1.5">
-        <Activity className="w-3.5 h-3.5" style={{ color: '#0891B2' }} />
-        System Health
-      </h3>
-      <div className="flex flex-col gap-3">
+    <div
+      data-src="src/components/dashboard/system-health-card.tsx"
+      style={{
+        background: 'rgba(20, 20, 20, 0.7)',
+        border: '1px solid rgba(51, 51, 51, 0.4)',
+        borderRadius: 10,
+        padding: '16px 18px',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+        <Activity style={{ width: 13, height: 13, color: '#0891B2' }} />
+        <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#64748B' }}>
+          System Health
+        </span>
+      </div>
+
+      {/* Bars */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
         {bars.map((bar) => (
           <div key={bar.label}>
-            <div className="flex justify-between mb-1">
-              <span className="text-[10px] text-[#B0B0B0]">{bar.label}</span>
-              <span className="text-[10px] font-bold" style={{ color: bar.color }}>{bar.value}%</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 10, color: '#B0B0B0' }}>{bar.label}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: bar.color, fontVariantNumeric: 'tabular-nums' }}>{bar.value}%</span>
             </div>
-            <div className="w-full h-1.5 rounded-full relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-              <div className="h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${bar.width}%`, background: `linear-gradient(90deg, ${bar.color}88, ${bar.color})` }} />
+            <div style={{ width: '100%', height: 5, borderRadius: 3, background: 'rgba(255,255,255,0.04)', overflow: 'hidden' }}>
+              <div
+                style={{
+                  height: '100%',
+                  borderRadius: 3,
+                  width: `${bar.width}%`,
+                  background: `linear-gradient(90deg, ${bar.color}66, ${bar.color})`,
+                  transition: 'width 1s ease-out',
+                  boxShadow: bar.width > 0 ? `0 0 8px ${bar.color}30` : 'none',
+                }}
+              />
             </div>
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap gap-2 mt-3">
-        <div className="flex items-center gap-1 px-2 py-1 rounded" style={{ background: 'rgba(13,13,13,0.8)' }}>
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: '#22D3EE' }} />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: '#22D3EE' }} />
-          </span>
-          <span className="text-[9px] text-[#64748B]">Uptime</span>
-          <span className="text-[9px] font-bold" style={{ color: '#22D3EE' }}>99.7%</span>
-        </div>
-        <div className="flex items-center gap-1 px-2 py-1 rounded" style={{ background: 'rgba(13,13,13,0.8)' }}>
-          <span className="text-[9px] text-[#64748B]">Connections</span>
-          <span className="text-[9px] font-bold" style={{ color: '#06B6D4' }}>55</span>
-        </div>
-        <div className="flex items-center gap-1 px-2 py-1 rounded" style={{ background: 'rgba(13,13,13,0.8)' }}>
-          <span className="text-[9px] text-[#64748B]">Error Rate</span>
-          <span className="text-[9px] font-bold" style={{ color: '#22D3EE' }}>0.3%</span>
-        </div>
+
+      {/* Chips */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(51,51,51,0.3)' }}>
+        {chips.map((chip) => (
+          <div
+            key={chip.label}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '4px 8px',
+              borderRadius: 6,
+              background: 'rgba(13,13,13,0.9)',
+              border: '1px solid rgba(51,51,51,0.3)',
+            }}
+          >
+            {chip.pulse && (
+              <span style={{ position: 'relative', width: 6, height: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ position: 'absolute', width: 6, height: 6, borderRadius: '50%', background: chip.color, animation: 'pulseGlow 2s ease-in-out infinite' }} />
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: chip.color, position: 'relative', zIndex: 1 }} />
+              </span>
+            )}
+            <span style={{ fontSize: 8, color: '#64748B' }}>{chip.label}</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: chip.color, fontVariantNumeric: 'tabular-nums' }}>{chip.value}</span>
+          </div>
+        ))}
       </div>
     </div>
   )

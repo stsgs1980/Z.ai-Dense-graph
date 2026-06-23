@@ -24,23 +24,86 @@ export function TopPerformersCard({ topPerformers: topPerformersProp, roleGroups
   }
 
   return (
-    <div data-src="src/components/dashboard/top-performers-card.tsx" className="rounded-xl p-4 relative overflow-hidden" style={{ background: 'rgba(26,26,26,0.6)', border: '1px solid rgba(51,51,51,0.5)' }}>
-      <div className="absolute top-0 left-0 bottom-0 w-[3px] rounded-l-xl" style={{ background: '#0891B2', opacity: 0.5 }} />
-      <h3 className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B] mb-3 flex items-center gap-1.5">
-        <BarChart3 className="w-3.5 h-3.5" style={{ color: '#0891B2' }} />
-        Top Performers
-      </h3>
-      <div className="flex flex-col gap-2">
+    <div
+      data-src="src/components/dashboard/top-performers-card.tsx"
+      style={{
+        background: 'rgba(20, 20, 20, 0.7)',
+        border: '1px solid rgba(51, 51, 51, 0.4)',
+        borderRadius: 10,
+        padding: '16px 18px',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+        <BarChart3 style={{ width: 13, height: 13, color: '#0891B2' }} />
+        <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#64748B' }}>
+          Top Performers
+        </span>
+      </div>
+
+      {/* Bars */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
         {topPerformers.map((agent, i) => {
           const barColor = getGroupColor(agent.group)
           const width = barWidths[i]
           return (
-            <div key={agent.name} className="flex items-center gap-2">
-              <span className="text-[10px] font-medium w-[80px] truncate text-right flex-shrink-0" style={{ color: barColor }}>{agent.name}</span>
-              <div className="flex-1 h-[6px] rounded-sm relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                <div className="h-full rounded-sm transition-all duration-700 ease-out" style={{ width: `${width}%`, background: `linear-gradient(90deg, ${barColor}44, ${barColor}aa)` }} />
+            <div key={agent.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Rank */}
+              <span style={{
+                fontSize: 9,
+                fontWeight: 700,
+                color: '#4B5563',
+                width: 14,
+                textAlign: 'right',
+                fontVariantNumeric: 'tabular-nums',
+              }}>
+                {i + 1}
+              </span>
+
+              {/* Name */}
+              <span style={{
+                fontSize: 10,
+                fontWeight: 600,
+                color: barColor,
+                width: 80,
+                textAlign: 'right',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+              }}>
+                {agent.name}
+              </span>
+
+              {/* Bar */}
+              <div style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.04)', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    borderRadius: 3,
+                    width: `${width}%`,
+                    background: `linear-gradient(90deg, ${barColor}33, ${barColor}bb)`,
+                    transition: 'width 0.7s ease-out',
+                    boxShadow: width > 0 ? `0 0 8px ${barColor}20` : 'none',
+                  }}
+                />
               </div>
-              <span className="text-[9px] font-bold w-7 text-right flex-shrink-0" style={{ color: barColor }}>{width > 0 ? agent.score : ''}</span>
+
+              {/* Score */}
+              <span style={{
+                fontSize: 10,
+                fontWeight: 800,
+                color: barColor,
+                width: 28,
+                textAlign: 'right',
+                fontVariantNumeric: 'tabular-nums',
+                flexShrink: 0,
+              }}>
+                {width > 0 ? agent.score : ''}
+              </span>
             </div>
           )
         })}

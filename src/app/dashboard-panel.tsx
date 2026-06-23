@@ -19,12 +19,15 @@ export default function DashboardPanel({ onOpenHierarchy, onOpenWorkflows }: { o
 
   if (data.loading) {
     return (
-      <div className="flex flex-col h-screen items-center justify-center" style={{ background: '#000000' }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full border-2 border-transparent" style={{ borderTopColor: '#06B6D4', borderRightColor: '#06B6D4', animation: 'spin 1s linear infinite' }} />
-          </div>
-          <div className="text-[#64748B] text-sm font-medium">Loading dashboard data...</div>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: '50%',
+            border: '2px solid transparent',
+            borderTopColor: '#06B6D4', borderRightColor: '#06B6D4',
+            animation: 'spin 1s linear infinite',
+          }} />
+          <div style={{ color: '#64748B', fontSize: 13, fontWeight: 500 }}>Loading dashboard data...</div>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       </div>
@@ -32,12 +35,8 @@ export default function DashboardPanel({ onOpenHierarchy, onOpenWorkflows }: { o
   }
 
   return (
-    <div className="flex flex-col h-screen" style={{ background: '#000000' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#000' }}>
       <style>{`
-        .activity-scroll::-webkit-scrollbar { width: 4px; }
-        .activity-scroll::-webkit-scrollbar-track { background: transparent; }
-        .activity-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-        .activity-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
         @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         @keyframes pulseGlow { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
@@ -46,57 +45,116 @@ export default function DashboardPanel({ onOpenHierarchy, onOpenWorkflows }: { o
 
       <DashboardHeader onOpenHierarchy={onOpenHierarchy} onOpenWorkflows={onOpenWorkflows} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onRefresh={data.handleRefresh} wsConnected={wsConnected} />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <DashboardSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} agentListProp={data.agentList} roleGroupsProp={data.roleGroups} onAgentClick={edit.handleAgentClick} />
-        <main className="flex-1 overflow-y-auto p-3 sm:p-5" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+
+        <main
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            padding: 20,
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgba(255,255,255,0.08) transparent',
+          }}
+        >
+          {/* Live indicator */}
           {data.statsData && (
-            <div className="flex items-center gap-2 mb-3">
-              <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: '#22D3EE' }} /><span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: '#22D3EE' }} /></span>
-              <span className="text-[9px] text-[#64748B]">Live data</span>
-              <span className="text-[9px] text-[#4B5563]">•</span>
-              <span className="text-[9px] text-[#64748B]" suppressHydrationWarning>Updated {data.lastUpdated || '—'}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <span style={{ position: 'relative', width: 6, height: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{
+                  position: 'absolute', width: 6, height: 6, borderRadius: '50%',
+                  background: '#22D3EE', animation: 'pulseGlow 2s ease-in-out infinite',
+                }} />
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22D3EE', position: 'relative', zIndex: 1 }} />
+              </span>
+              <span style={{ fontSize: 9, color: '#64748B' }}>Live data</span>
+              <span style={{ fontSize: 9, color: '#4B5563' }}>•</span>
+              <span style={{ fontSize: 9, color: '#64748B' }} suppressHydrationWarning>
+                Updated {data.lastUpdated || '—'}
+              </span>
             </div>
           )}
+
+          {/* KPI Strip */}
           <KPIStrip quickStats={data.quickStats} />
 
-          {/* Row 1 — Compact metric cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          {/* Row 1 — Status / Performers / Health */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: 12,
+            marginTop: 12,
+          }}>
             <StatusDistributionCard statusDistribution={data.statusDistribution} />
             <TopPerformersCard topPerformersProp={data.topPerformers} roleGroupsProp={data.roleGroups} />
             <SystemHealthCard />
           </div>
 
-          {/* Row 2 — Chart + Timeline (balanced height) */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">
-            <div className="xl:col-span-2"><NetworkActivityChart data={data.networkActivityData} /></div>
+          {/* Row 2 — Network chart (2/3) + Timeline (1/3) */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '2fr 1fr',
+            gap: 12,
+            marginTop: 12,
+          }}>
+            <NetworkActivityChart data={data.networkActivityData} />
             <RecentActivityTimeline events={data.activityEvents} />
           </div>
 
-          {/* Row 3 — Heatmap + Formula grid (balanced height) */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">
+          {/* Row 3 — Heatmap (1/3) + Formula mapping (2/3) */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 2fr',
+            gap: 12,
+            marginTop: 12,
+          }}>
             <ConnectionHeatmap data={data.connectionHeatmapData} />
-            <div className="xl:col-span-2"><FormulaAgentMappingGrid /></div>
+            <FormulaAgentMappingGrid />
           </div>
 
           {/* Row 4 — Workflows full width */}
-          <WorkflowStatsSection workflowsData={data.workflowsData} onOpenWorkflows={onOpenWorkflows} />
+          <div style={{ marginTop: 4 }}>
+            <WorkflowStatsSection workflowsData={data.workflowsData} onOpenWorkflows={onOpenWorkflows} />
+          </div>
         </main>
       </div>
 
-      <footer className="flex-shrink-0 flex items-center justify-between px-5 py-2" style={{ background: '#0A0A0A', borderTop: '1px solid rgba(51,51,51,0.3)' }}>
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-semibold tracking-wider" style={{ color: '#64748B' }}>Agent Qube</span>
-          <span className="text-[9px]" style={{ color: '#4B5563' }}>v5.2</span>
-          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#22C55E' }} /><span className="text-[8px] font-bold" style={{ color: '#22C55E' }}>ONLINE</span>
+      {/* Footer */}
+      <footer style={{
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '8px 20px',
+        background: '#0A0A0A',
+        borderTop: '1px solid rgba(51,51,51,0.3)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.5px', color: '#64748B' }}>Agent Qube</span>
+          <span style={{ fontSize: 9, color: '#4B5563' }}>v5.2</span>
+          <span style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '2px 6px', borderRadius: '9999px',
+            background: 'rgba(34,197,94,0.08)',
+            border: '1px solid rgba(34,197,94,0.2)',
+          }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: '#22C55E',
+              boxShadow: '0 0 4px rgba(34,197,94,0.4)',
+            }} />
+            <span style={{ fontSize: 8, fontWeight: 700, color: '#22C55E', letterSpacing: '0.5px' }}>ONLINE</span>
           </span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-[9px]" style={{ color: '#4B5563' }} suppressHydrationWarning>{data.lastUpdated ? `Updated ${data.lastUpdated}` : '—'}</span>
-          <span className="text-[9px]" style={{ color: '#3F3F46' }}>•</span>
-          <span className="text-[9px]" style={{ color: '#4B5563' }}>26 agents</span>
-          <span className="text-[9px]" style={{ color: '#3F3F46' }}>•</span>
-          <span className="text-[9px]" style={{ color: '#4B5563' }}>Next.js 16 + Turbopack</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 9, color: '#4B5563' }} suppressHydrationWarning>
+            {data.lastUpdated ? `Updated ${data.lastUpdated}` : '—'}
+          </span>
+          <span style={{ fontSize: 9, color: '#3F3F46' }}>•</span>
+          <span style={{ fontSize: 9, color: '#4B5563' }}>26 agents</span>
+          <span style={{ fontSize: 9, color: '#3F3F46' }}>•</span>
+          <span style={{ fontSize: 9, color: '#4B5563' }}>Next.js 16 + Turbopack</span>
         </div>
       </footer>
 
