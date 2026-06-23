@@ -61,8 +61,8 @@ export function NetworkActivityChart({ data: activityData }: { data?: number[] }
       </div>
 
       {/* Chart */}
-      <div style={{ flex: 1, minHeight: 0 }}>
-        <svg viewBox={`0 0 ${chartW} ${chartH}`} style={{ width: '100%', height: '100%', display: 'block' }}>
+      <div>
+        <svg viewBox={`0 0 ${chartW} ${chartH}`} preserveAspectRatio="xMinYMin meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
           <defs>
             <linearGradient id="areaGradMain" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="rgba(6,182,212,0.2)">

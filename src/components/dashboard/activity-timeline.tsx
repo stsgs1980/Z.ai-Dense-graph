@@ -16,7 +16,6 @@ export function RecentActivityTimeline({ events }: { events?: typeof ACTIVITY_EV
         padding: '18px 20px',
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
         overflow: 'hidden',
       }}
     >
