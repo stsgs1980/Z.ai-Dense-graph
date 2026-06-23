@@ -15,66 +15,13 @@ import { AddAgentModal } from './add-agent-modal'
 import { GroupSidebar, DetailPanel, KPIStrip } from './panels'
 import type { AgentData } from './types'
 
-// ─── Thin orchestrator — composes hooks + sub-components ────────────────────────
-
-export default function AgentHierarchy({ onBack }: { onBack?: () => void }) {
-  const reactFlowInstanceRef = useRef<any>(null)
-  const reactFlowWrapper = useRef<HTMLDivElement>(null)
-
-  const { agents, setAgents, loading, connections, wsConnected, fetchAgents } = useHierarchyData(reactFlowInstanceRef)
-  const st = useHierarchyState(reactFlowInstanceRef)
-
-  // Compute positions
-  const positions = useMemo(() => {
-    const layout = st.viewMode === 'radial' ? computeRadialLayout(agents)
-      : st.viewMode === 'grid' ? computeGridLayout(agents)
-      : computeDagreLayout(agents, connections)
-    const map: Record<string, { x: number; y: number }> = {}
-    for (const p of layout) map[p.id] = { x: p.x, y: p.y }
-    return map
-  }, [agents, connections, st.viewMode])
-
-  // Search matches
-  const searchMatches = useMemo(() => {
-    if (!st.searchQuery.trim()) return new Set<string>()
-    const q = st.searchQuery.toLowerCase()
-    const matches = new Set<string>()
-    for (const a of agents) {
-      const sk = a.skills ? a.skills.toLowerCase() : ''
-      if (a.name.toLowerCase().includes(q) || a.role.toLowerCase().includes(q) || sk.includes(q)) matches.add(a.id)
-    }
-    return matches
-  }, [agents, st.searchQuery])
-
-  // Flow nodes/edges
-  const flowNodes: Node[] = useMemo(() => agents.map(a => ({
-    id: a.id, type: 'agentNode', position: positions[a.id] || { x: 0, y: 0 },
-    data: { ...a, isHighlighted: st.searchQuery.trim() && searchMatches.has(a.id), isDimmed: (st.activeFilter && a.roleGroup !== st.activeFilter) || (st.searchQuery.trim() && !searchMatches.has(a.id)), skillCount: a.skills ? a.skills.split(',').filter(Boolean).length : 0, taskCount: Array.isArray(a.tasks) ? a.tasks.length : 0 },
-    selected: a.id === st.selectedAgentId,
-  })), [agents, positions, st.activeFilter, st.searchQuery, searchMatches, st.selectedAgentId])
-
-  const flowEdges: Edge[] = useMemo(() => connections.filter(c => st.visibleEdgeTypes.has(c.type)).map(c => ({
-    id: c.id, source: c.from, target: c.to, type: 'agentEdge',
-    data: { edgeType: c.type, strength: c.strength, flowAnimation: true },
-  })), [connections, st.visibleEdgeTypes])
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges)
-  useEffect(() => { setNodes(flowNodes) }, [flowNodes, setNodes])
-  useEffect(() => { setEdges(flowEdges) }, [flowEdges, setEdges])
-
-  const layerPositions = useMemo(() => {
-    const ly: Record<number, { minY: number; maxY: number }> = {}
-    for (const a of agents) { const cfg = ROLE_CONFIG[a.roleGroup]; if (!cfg) continue; const pos = positions[a.id]; if (!pos) continue; if (!ly[cfg.level]) ly[cfg.level] = { minY: pos.y, maxY: pos.y + 58 }; else { ly[cfg.level].minY = Math.min(ly[cfg.level].minY, pos.y); ly[cfg.level].maxY = Math.max(ly[cfg.level].maxY, pos.y + 58) } }
-    return ly
-  }, [agents, positions])
-
-  const selectedAgent = useMemo(() => agents.find(a => a.id === st.selectedAgentId) || null, [agents, st.selectedAgentId])
-
-  useEffect(() => { if (st.fitMode && reactFlowInstanceRef.current) { const t = setTimeout(() => reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 500 }), 400); return () => clearTimeout(t) } }, [agents.length, st.fitMode])
-
-  if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#555', fontSize: 14, gap: 8 }}><RefreshCw size={16} color="#555" className="animate-spin" />Loading hierarchy...</div>
-
+function HierarchyContent({ agents, setAgents, connections, wsConnected, fetchAgents, st, positions, searchMatches, flowNodes, flowEdges, nodes, setNodes, onNodesChange, edges, setEdges, onEdgesChange, layerPositions, selectedAgent, reactFlowInstanceRef, reactFlowWrapper, onBack }: {
+  agents: AgentData[]; setAgents: React.Dispatch<React.SetStateAction<AgentData[]>>; connections: any[]; wsConnected: boolean; fetchAgents: () => void
+  st: ReturnType<typeof useHierarchyState>; positions: Record<string, { x: number; y: number }>; searchMatches: Set<string>
+  flowNodes: Node[]; flowEdges: Edge[]; nodes: Node[]; setNodes: (n: Node[]) => void; onNodesChange: any
+  edges: Edge[]; setEdges: (e: Edge[]) => void; onEdgesChange: any; layerPositions: Record<number, { minY: number; maxY: number }>
+  selectedAgent: AgentData | null; reactFlowInstanceRef: React.MutableRefObject<any>; reactFlowWrapper: React.RefObject<HTMLDivElement | null>; onBack?: () => void
+}) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#000' }}>
       <HierarchyHeader wsConnected={wsConnected} onRefresh={fetchAgents} onAddAgent={() => st.setShowAddAgent(true)} onBack={onBack} />
@@ -91,5 +38,49 @@ export default function AgentHierarchy({ onBack }: { onBack?: () => void }) {
       <KPIStrip agents={agents} />
       <AddAgentModal open={st.showAddAgent} onClose={() => st.setShowAddAgent(false)} onCreated={fetchAgents} />
     </div>
+  )
+}
+
+export default function AgentHierarchy({ onBack }: { onBack?: () => void }) {
+  const reactFlowInstanceRef = useRef<any>(null)
+  const reactFlowWrapper = useRef<HTMLDivElement>(null)
+  const { agents, setAgents, loading, connections, wsConnected, fetchAgents } = useHierarchyData(reactFlowInstanceRef)
+  const st = useHierarchyState(reactFlowInstanceRef)
+
+  const positions = useMemo(() => {
+    const layout = st.viewMode === 'radial' ? computeRadialLayout(agents) : st.viewMode === 'grid' ? computeGridLayout(agents) : computeDagreLayout(agents, connections)
+    const map: Record<string, { x: number; y: number }> = {}
+    for (const p of layout) map[p.id] = { x: p.x, y: p.y }
+    return map
+  }, [agents, connections, st.viewMode])
+
+  const searchMatches = useMemo(() => {
+    if (!st.searchQuery.trim()) return new Set<string>()
+    const q = st.searchQuery.toLowerCase()
+    return new Set(agents.filter(a => a.name.toLowerCase().includes(q) || a.role.toLowerCase().includes(q) || (a.skills || '').toLowerCase().includes(q)).map(a => a.id))
+  }, [agents, st.searchQuery])
+
+  const flowNodes: Node[] = useMemo(() => agents.map(a => ({ id: a.id, type: 'agentNode', position: positions[a.id] || { x: 0, y: 0 }, data: { ...a, isHighlighted: st.searchQuery.trim() && searchMatches.has(a.id), isDimmed: (st.activeFilter && a.roleGroup !== st.activeFilter) || (st.searchQuery.trim() && !searchMatches.has(a.id)), skillCount: a.skills ? a.skills.split(',').filter(Boolean).length : 0, taskCount: Array.isArray(a.tasks) ? a.tasks.length : 0 }, selected: a.id === st.selectedAgentId })), [agents, positions, st.activeFilter, st.searchQuery, searchMatches, st.selectedAgentId])
+
+  const flowEdges: Edge[] = useMemo(() => connections.filter((c: any) => st.visibleEdgeTypes.has(c.type)).map((c: any) => ({ id: c.id, source: c.from, target: c.to, type: 'agentEdge', data: { edgeType: c.type, strength: c.strength, flowAnimation: true } })), [connections, st.visibleEdgeTypes])
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(flowNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(flowEdges)
+  useEffect(() => { setNodes(flowNodes) }, [flowNodes, setNodes])
+  useEffect(() => { setEdges(flowEdges) }, [flowEdges, setEdges])
+
+  const layerPositions = useMemo(() => {
+    const ly: Record<number, { minY: number; maxY: number }> = {}
+    for (const a of agents) { const cfg = ROLE_CONFIG[a.roleGroup]; if (!cfg) continue; const pos = positions[a.id]; if (!pos) continue; if (!ly[cfg.level]) ly[cfg.level] = { minY: pos.y, maxY: pos.y + 58 }; else { ly[cfg.level].minY = Math.min(ly[cfg.level].minY, pos.y); ly[cfg.level].maxY = Math.max(ly[cfg.level].maxY, pos.y + 58) } }
+    return ly
+  }, [agents, positions])
+
+  const selectedAgent = useMemo(() => agents.find(a => a.id === st.selectedAgentId) || null, [agents, st.selectedAgentId])
+  useEffect(() => { if (st.fitMode && reactFlowInstanceRef.current) { const t = setTimeout(() => reactFlowInstanceRef.current?.fitView({ padding: 0.15, duration: 500 }), 400); return () => clearTimeout(t) } }, [agents.length, st.fitMode])
+
+  if (loading) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#555', fontSize: 14, gap: 8 }}><RefreshCw size={16} color="#555" className="animate-spin" />Loading hierarchy...</div>
+
+  return (
+    <HierarchyContent agents={agents} setAgents={setAgents} connections={connections} wsConnected={wsConnected} fetchAgents={fetchAgents} st={st} positions={positions} searchMatches={searchMatches} flowNodes={flowNodes} flowEdges={flowEdges} nodes={nodes} setNodes={setNodes} onNodesChange={onNodesChange} edges={edges} setEdges={setEdges} onEdgesChange={onEdgesChange} layerPositions={layerPositions} selectedAgent={selectedAgent} reactFlowInstanceRef={reactFlowInstanceRef} reactFlowWrapper={reactFlowWrapper} onBack={onBack} />
   )
 }

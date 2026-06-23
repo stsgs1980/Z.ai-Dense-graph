@@ -4,8 +4,6 @@ import React from 'react'
 import { ChevronRight } from 'lucide-react'
 import { ROLE_CONFIG, FORMULA_DESC, type AgentData } from './types'
 
-// ─── Connection Item ──────────────────────────────────────────────────────
-
 function ConnItem({ label, name, color }: { label: string; name: string; color: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#B0B0B0', padding: '3px 6px', borderRadius: 4, background: 'rgba(51,51,51,0.08)' }}>
@@ -17,7 +15,75 @@ function ConnItem({ label, name, color }: { label: string; name: string; color: 
   )
 }
 
-// ─── Agent Detail Info (view-mode body) ───────────────────────────────────
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(51,51,51,0.2)' }}>
+      <div style={{ fontSize: 8, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>{title}</div>
+      {children}
+    </div>
+  )
+}
+
+function DescriptionSection({ description }: { description: string }) {
+  return (
+    <Section title="Description">
+      <div style={{ fontSize: 11, color: '#B0B0B0', lineHeight: 1.5 }}>{description}</div>
+    </Section>
+  )
+}
+
+function FormulaSection({ formula, formulaDesc, config }: { formula: string; formulaDesc: string; config: typeof ROLE_CONFIG[string] }) {
+  return (
+    <Section title="Cognitive Formula">
+      <div style={{ background: `rgba(${config.colorRgb}, 0.06)`, border: `1px solid rgba(${config.colorRgb}, 0.15)`, borderRadius: 6, padding: '8px 10px' }}>
+        <div style={{ fontSize: 13, fontWeight: 800, color: config.color }}>{formula}</div>
+        <div style={{ fontSize: 9, color: '#64748B', marginTop: 2 }}>{formulaDesc}</div>
+      </div>
+    </Section>
+  )
+}
+
+function SkillsSection({ skills }: { skills: string[] }) {
+  return (
+    <Section title={`Skills (${skills.length})`}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+        {skills.map(skill => (
+          <span key={skill} style={{ fontSize: 8, fontWeight: 600, padding: '2px 5px', borderRadius: 3, background: 'rgba(51,51,51,0.2)', color: '#64748B', border: '1px solid rgba(51,51,51,0.3)' }}>{skill.trim()}</span>
+        ))}
+      </div>
+    </Section>
+  )
+}
+
+function ConnectionsSection({ parent, twin, children, allAgents }: { parent: AgentData | null; twin: AgentData | null; children: AgentData[]; allAgents: AgentData[] }) {
+  return (
+    <Section title="Connections">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {parent && <ConnItem label="Parent" name={parent.name} color={ROLE_CONFIG[parent.roleGroup]?.color || '#888'} />}
+        {twin && <ConnItem label="Twin" name={twin.name} color={ROLE_CONFIG[twin.roleGroup]?.color || '#888'} />}
+        {children.length > 0 && (
+          <div>
+            <span style={{ fontSize: 9, color: '#555' }}>Children</span>
+            <div style={{ marginLeft: 8, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {children.map(c => <ConnItem key={c.id} label="" name={c.name} color={ROLE_CONFIG[c.roleGroup]?.color || '#888'} />)}
+            </div>
+          </div>
+        )}
+      </div>
+    </Section>
+  )
+}
+
+function TasksSection({ count, color }: { count: number; color: string }) {
+  return (
+    <Section title="Tasks">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 20, fontWeight: 800, color: color }}>{count}</span>
+        <span style={{ fontSize: 9, color: '#555' }}>assigned</span>
+      </div>
+    </Section>
+  )
+}
 
 export function AgentDetailInfo({ agent, allAgents }: { agent: AgentData; allAgents: AgentData[] }) {
   const config = ROLE_CONFIG[agent.roleGroup] || ROLE_CONFIG['Execution']
@@ -29,64 +95,11 @@ export function AgentDetailInfo({ agent, allAgents }: { agent: AgentData; allAge
 
   return (
     <>
-      {/* Description */}
-      <Section title="Description">
-        <div style={{ fontSize: 11, color: '#B0B0B0', lineHeight: 1.5 }}>{agent.description}</div>
-      </Section>
-
-      {/* Formula */}
-      <Section title="Cognitive Formula">
-        <div style={{ background: `rgba(${config.colorRgb}, 0.06)`, border: `1px solid rgba(${config.colorRgb}, 0.15)`, borderRadius: 6, padding: '8px 10px' }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: config.color }}>{agent.formula}</div>
-          <div style={{ fontSize: 9, color: '#64748B', marginTop: 2 }}>{formulaDesc}</div>
-        </div>
-      </Section>
-
-      {/* Skills */}
-      <Section title={`Skills (${skills.length})`}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-          {skills.map(skill => (
-            <span key={skill} style={{ fontSize: 8, fontWeight: 600, padding: '2px 5px', borderRadius: 3, background: 'rgba(51,51,51,0.2)', color: '#64748B', border: '1px solid rgba(51,51,51,0.3)' }}>
-              {skill.trim()}
-            </span>
-          ))}
-        </div>
-      </Section>
-
-      {/* Connections */}
-      <Section title="Connections">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {parent && <ConnItem label="Parent" name={parent.name} color={ROLE_CONFIG[parent.roleGroup]?.color || '#888'} />}
-          {twin && <ConnItem label="Twin" name={twin.name} color={ROLE_CONFIG[twin.roleGroup]?.color || '#888'} />}
-          {children.length > 0 && (
-            <div>
-              <span style={{ fontSize: 9, color: '#555' }}>Children</span>
-              <div style={{ marginLeft: 8, marginTop: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {children.map(c => <ConnItem key={c.id} label="" name={c.name} color={ROLE_CONFIG[c.roleGroup]?.color || '#888'} />)}
-              </div>
-            </div>
-          )}
-        </div>
-      </Section>
-
-      {/* Tasks */}
-      <Section title="Tasks">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 20, fontWeight: 800, color: config.color }}>
-            {Array.isArray(agent.tasks) ? agent.tasks.length : 0}
-          </span>
-          <span style={{ fontSize: 9, color: '#555' }}>assigned</span>
-        </div>
-      </Section>
+      <DescriptionSection description={agent.description} />
+      <FormulaSection formula={agent.formula} formulaDesc={formulaDesc} config={config} />
+      <SkillsSection skills={skills} />
+      <ConnectionsSection parent={parent} twin={twin} children={children} allAgents={allAgents} />
+      <TasksSection count={Array.isArray(agent.tasks) ? agent.tasks.length : 0} color={config.color} />
     </>
-  )
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(51,51,51,0.2)' }}>
-      <div style={{ fontSize: 8, fontWeight: 700, color: '#555', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>{title}</div>
-      {children}
-    </div>
   )
 }

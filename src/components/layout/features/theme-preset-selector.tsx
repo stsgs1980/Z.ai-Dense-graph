@@ -73,6 +73,49 @@ function PresetRow({ def, active, onSelect, tokens }: {
   )
 }
 
+// ─── Preset Dropdown ────────────────────────────────────────
+
+function PresetDropdown({ tokens, preset, setPreset, onClose }: { tokens: any; preset: string; setPreset: (id: string) => void; onClose: () => void }) {
+  const darkPresets = getByMode('dark')
+  const lightPresets = getByMode('light')
+
+  return (
+    <div style={{
+      position: 'absolute', top: '100%', right: 0, marginTop: 6,
+      width: 260, background: tokens.bgBase,
+      border: `1px solid ${tokens.borderDefault}`,
+      borderRadius: tokens.cornerRadius, overflow: 'hidden',
+      boxShadow: tokens.cardShadow, zIndex: 50,
+    }}>
+      <div style={{ padding: `${spacing.sm}px ${spacing.md}px`, borderBottom: `1px solid ${tokens.borderSubtle}`, display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Palette style={{ width: 12, height: 12, color: tokens.textMuted }} />
+        <span style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, textTransform: 'uppercase', letterSpacing: '0.1em', color: tokens.textDim, fontFamily: tokens.fontFamilyBody }}>Theme</span>
+      </div>
+      <PresetGroup tokens={tokens} preset={preset} setPreset={setPreset} onClose={onClose} label="Dark" presets={darkPresets} Icon={Moon} />
+      <div style={{ height: 1, background: tokens.borderSubtle, margin: `0 ${spacing.md}px` }} />
+      <PresetGroup tokens={tokens} preset={preset} setPreset={setPreset} onClose={onClose} label="Light" presets={lightPresets} Icon={Sun} />
+      <div style={{ padding: `${spacing.sm}px ${spacing.md}px`, borderTop: `1px solid ${tokens.borderSubtle}`, fontSize: fontSize.xs, color: tokens.textDim, fontFamily: tokens.fontFamilyBody, display: 'flex', alignItems: 'center', gap: 4 }}>
+        <span>Toggle:</span>
+        <kbd style={{ fontSize: fontSize.xs, background: tokens.bgSurface, padding: '1px 4px', borderRadius: 2, border: `1px solid ${tokens.borderDefault}` }}>sun/moon</kbd>
+        <span style={{ marginLeft: 'auto' }}>paired dark/light</span>
+      </div>
+    </div>
+  )
+}
+
+function PresetGroup({ tokens, preset, setPreset, onClose, label, presets, Icon }: { tokens: any; preset: string; setPreset: (id: string) => void; onClose: () => void; label: string; presets: PresetDefinition[]; Icon: any }) {
+  return (
+    <div style={{ padding: `${spacing.xs}px 0` }}>
+      <div style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, textTransform: 'uppercase', letterSpacing: '0.1em', color: tokens.textDim, padding: `${spacing.xs}px ${spacing.md}px`, fontFamily: tokens.fontFamilyBody, display: 'flex', alignItems: 'center', gap: 4 }}>
+        <Icon style={{ width: 10, height: 10 }} /> {label}
+      </div>
+      {presets.map(def => (
+        <PresetRow key={def.id} def={def} active={def.id === preset} onSelect={() => { setPreset(def.id); onClose() }} tokens={tokens} />
+      ))}
+    </div>
+  )
+}
+
 // ─── Theme Preset Selector ───────────────────────────────────
 
 export function ThemePresetSelector() {
@@ -89,8 +132,6 @@ export function ThemePresetSelector() {
   }, [])
 
   const current = getAllPresets().find(p => p.id === preset)
-  const darkPresets = getByMode('dark')
-  const lightPresets = getByMode('light')
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -108,54 +149,8 @@ export function ThemePresetSelector() {
         {current?.label ?? 'Theme'}
         <ChevronDown style={{ width: 12, height: 12, transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none' }} />
       </button>
-
       <ThemeModeToggle />
-
-      {open && (
-        <div style={{
-          position: 'absolute', top: '100%', right: 0, marginTop: 6,
-          width: 260, background: tokens.bgBase,
-          border: `1px solid ${tokens.borderDefault}`,
-          borderRadius: tokens.cornerRadius, overflow: 'hidden',
-          boxShadow: tokens.cardShadow, zIndex: 50,
-        }}>
-          <div style={{ padding: `${spacing.sm}px ${spacing.md}px`, borderBottom: `1px solid ${tokens.borderSubtle}`, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Palette style={{ width: 12, height: 12, color: tokens.textMuted }} />
-            <span style={{ fontSize: fontSize.sm, fontWeight: fontWeight.bold, textTransform: 'uppercase', letterSpacing: '0.1em', color: tokens.textDim, fontFamily: tokens.fontFamilyBody }}>Theme</span>
-          </div>
-
-          <div style={{ padding: `${spacing.xs}px 0` }}>
-            <div style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, textTransform: 'uppercase', letterSpacing: '0.1em', color: tokens.textDim, padding: `${spacing.xs}px ${spacing.md}px`, fontFamily: tokens.fontFamilyBody, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Moon style={{ width: 10, height: 10 }} /> Dark
-            </div>
-            {darkPresets.map(def => (
-              <PresetRow key={def.id} def={def} active={def.id === preset} onSelect={() => { setPreset(def.id); setOpen(false) }} tokens={tokens} />
-            ))}
-          </div>
-
-          <div style={{ height: 1, background: tokens.borderSubtle, margin: `0 ${spacing.md}px` }} />
-
-          <div style={{ padding: `${spacing.xs}px 0` }}>
-            <div style={{ fontSize: fontSize.xs, fontWeight: fontWeight.bold, textTransform: 'uppercase', letterSpacing: '0.1em', color: tokens.textDim, padding: `${spacing.xs}px ${spacing.md}px`, fontFamily: tokens.fontFamilyBody, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Sun style={{ width: 10, height: 10 }} /> Light
-            </div>
-            {lightPresets.map(def => (
-              <PresetRow key={def.id} def={def} active={def.id === preset} onSelect={() => { setPreset(def.id); setOpen(false) }} tokens={tokens} />
-            ))}
-          </div>
-
-          <div style={{
-            padding: `${spacing.sm}px ${spacing.md}px`,
-            borderTop: `1px solid ${tokens.borderSubtle}`,
-            fontSize: fontSize.xs, color: tokens.textDim, fontFamily: tokens.fontFamilyBody,
-            display: 'flex', alignItems: 'center', gap: 4,
-          }}>
-            <span>Toggle:</span>
-            <kbd style={{ fontSize: fontSize.xs, background: tokens.bgSurface, padding: '1px 4px', borderRadius: 2, border: `1px solid ${tokens.borderDefault}` }}>sun/moon</kbd>
-            <span style={{ marginLeft: 'auto' }}>paired dark/light</span>
-          </div>
-        </div>
-      )}
+      {open && <PresetDropdown tokens={tokens} preset={preset} setPreset={setPreset} onClose={() => setOpen(false)} />}
     </div>
   )
 }

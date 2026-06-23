@@ -14,8 +14,6 @@ export function IntentDisplay({ analysis }: IntentDisplayProps) {
   return (
     <div className="space-y-6">
       <SectionLabel>System Analysis</SectionLabel>
-
-      {/* Intent Detection */}
       <Card>
         <CardTitle>Intent Detection</CardTitle>
         <div className="space-y-3 mt-4">
@@ -33,49 +31,59 @@ export function IntentDisplay({ analysis }: IntentDisplayProps) {
         )}
       </Card>
 
-      {/* Recommended Formula */}
-      <Card>
-        <CardTitle>Recommended Formula</CardTitle>
-        {recommendedFormula ? (
-          <div className="mt-3">
-            <div className="flex items-center gap-2.5 mb-2">
-              <span className="text-white text-sm font-semibold">{recommendedFormula.name}</span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-medium" style={{ background: 'rgba(6,182,212,0.12)', color: '#06B6D4' }}>{recommendedFormula.category}</span>
-            </div>
-            <p className="text-xs leading-relaxed" style={{ color: '#94A3B8' }}>{recommendedFormula.description.slice(0, 180)}...</p>
-            <div className="mt-3 px-3 py-2 rounded-lg" style={{ background: 'rgba(6,182,212,0.05)', border: '1px solid rgba(6,182,212,0.1)' }}>
-              <span className="text-[11px] font-semibold" style={{ color: '#06B6D4' }}>Why: </span>
-              <span className="text-[11px]" style={{ color: '#94A3B8' }}>{formulaReason}</span>
-            </div>
-          </div>
-        ) : (
-          <p className="text-xs mt-2" style={{ color: '#64748B' }}>No formula recommendation available</p>
-        )}
-      </Card>
+      <FormulaCard recommendedFormula={recommendedFormula} formulaReason={formulaReason} />
 
-      {/* Agent Chain */}
-      <Card>
-        <CardTitle>Agent Chain</CardTitle>
-        <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          {agentChain.map((agent, i) => {
-            const config = ROLE_CONFIG[agent.roleGroup] || ROLE_CONFIG.Execution
-            return (
-              <div key={agent.id} className="flex items-center gap-2 flex-shrink-0">
-                <div className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-lg min-w-[80px]" style={{ background: `rgba(${config.colorRgb},0.08)`, border: `1px solid rgba(${config.colorRgb},0.2)` }}>
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold" style={{ background: `rgba(${config.colorRgb},0.2)`, color: config.color }}>{agent.name.charAt(0)}</span>
-                  <span className="text-xs font-medium text-white text-center leading-tight">{agent.name}</span>
-                  <span className="text-[10px] font-medium" style={{ color: config.color }}>{config.label}</span>
-                </div>
-                {i < agentChain.length - 1 && <ArrowRight size={14} style={{ color: '#475569' }} className="flex-shrink-0" />}
-              </div>
-            )
-          })}
-        </div>
-        <div className="mt-3 text-xs" style={{ color: '#64748B' }}>
-          Primary: <span className="font-medium" style={{ color: '#94A3B8' }}>{bestRole.name}</span> -- best suited for {intent.intent} tasks
-        </div>
-      </Card>
+      <AgentChainCard agentChain={agentChain} bestRole={bestRole} intent={intent.intent} />
     </div>
+  )
+}
+
+function FormulaCard({ recommendedFormula, formulaReason }: { recommendedFormula: any; formulaReason: string }) {
+  return (
+    <Card>
+      <CardTitle>Recommended Formula</CardTitle>
+      {recommendedFormula ? (
+        <div className="mt-3">
+          <div className="flex items-center gap-2.5 mb-2">
+            <span className="text-white text-sm font-semibold">{recommendedFormula.name}</span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-medium" style={{ background: 'rgba(6,182,212,0.12)', color: '#06B6D4' }}>{recommendedFormula.category}</span>
+          </div>
+          <p className="text-xs leading-relaxed" style={{ color: '#94A3B8' }}>{recommendedFormula.description.slice(0, 180)}...</p>
+          <div className="mt-3 px-3 py-2 rounded-lg" style={{ background: 'rgba(6,182,212,0.05)', border: '1px solid rgba(6,182,212,0.1)' }}>
+            <span className="text-[11px] font-semibold" style={{ color: '#06B6D4' }}>Why: </span>
+            <span className="text-[11px]" style={{ color: '#94A3B8' }}>{formulaReason}</span>
+          </div>
+        </div>
+      ) : (
+        <p className="text-xs mt-2" style={{ color: '#64748B' }}>No formula recommendation available</p>
+      )}
+    </Card>
+  )
+}
+
+function AgentChainCard({ agentChain, bestRole, intent }: { agentChain: any[]; bestRole: any; intent: string }) {
+  return (
+    <Card>
+      <CardTitle>Agent Chain</CardTitle>
+      <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {agentChain.map((agent, i) => {
+          const config = ROLE_CONFIG[agent.roleGroup] || ROLE_CONFIG.Execution
+          return (
+            <div key={agent.id} className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex flex-col items-center gap-1.5 px-3 py-3 rounded-lg min-w-[80px]" style={{ background: `rgba(${config.colorRgb},0.08)`, border: `1px solid rgba(${config.colorRgb},0.2)` }}>
+                <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold" style={{ background: `rgba(${config.colorRgb},0.2)`, color: config.color }}>{agent.name.charAt(0)}</span>
+                <span className="text-xs font-medium text-white text-center leading-tight">{agent.name}</span>
+                <span className="text-[10px] font-medium" style={{ color: config.color }}>{config.label}</span>
+              </div>
+              {i < agentChain.length - 1 && <ArrowRight size={14} style={{ color: '#475569' }} className="flex-shrink-0" />}
+            </div>
+          )
+        })}
+      </div>
+      <div className="mt-3 text-xs" style={{ color: '#64748B' }}>
+        Primary: <span className="font-medium" style={{ color: '#94A3B8' }}>{bestRole.name}</span> -- best suited for {intent} tasks
+      </div>
+    </Card>
   )
 }
 

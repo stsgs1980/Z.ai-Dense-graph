@@ -16,6 +16,37 @@ export interface AgentExecStats {
 
 export type ExecStatsMap = Record<string, AgentExecStats>
 
+const EMPTY_STATS: AgentExecStats = {
+  totalRuns: 0, completedRuns: 0, failedRuns: 0,
+  avgScore: 0, lastExecutedAt: null, isRunning: false,
+}
+
+function handleExecuting(setStats: React.Dispatch<React.SetStateAction<ExecStatsMap>>, agentId: string) {
+  setStats(prev => {
+    const existing = prev[agentId] || EMPTY_STATS
+    return { ...prev, [agentId]: { ...existing, isRunning: true, totalRuns: existing.totalRuns + 1, lastExecutedAt: new Date().toISOString() } }
+  })
+}
+
+function handleStepCompleted(setStats: React.Dispatch<React.SetStateAction<ExecStatsMap>>, agentId: string, score?: number) {
+  setStats(prev => {
+    const existing = prev[agentId]
+    if (!existing) return prev
+    const avgScore = score !== undefined
+      ? Math.round(((existing.avgScore * existing.completedRuns + score) / (existing.completedRuns + 1)) * 10) / 10
+      : existing.avgScore
+    return { ...prev, [agentId]: { ...existing, isRunning: false, completedRuns: existing.completedRuns + 1, avgScore } }
+  })
+}
+
+function handleStepFailed(setStats: React.Dispatch<React.SetStateAction<ExecStatsMap>>, agentId: string) {
+  setStats(prev => {
+    const existing = prev[agentId]
+    if (!existing) return prev
+    return { ...prev, [agentId]: { ...existing, isRunning: false, failedRuns: existing.failedRuns + 1 } }
+  })
+}
+
 // ─── Hook: useExecutionStats ────────────────────────────────────────────────
 // Fetches aggregated execution stats for all agents,
 // then subscribes to WebSocket events for real-time updates.
@@ -28,10 +59,7 @@ export function useExecutionStats() {
   const fetchStats = useCallback(async () => {
     try {
       const res = await fetch('/api/agents/execution-stats')
-      if (res.ok) {
-        const data = await res.json()
-        setStats(data.agentStats || {})
-      }
+      if (res.ok) { const data = await res.json(); setStats(data.agentStats || {}) }
     } catch (err) {
       console.error('[useExecutionStats] fetch failed:', err)
     } finally {
@@ -39,80 +67,18 @@ export function useExecutionStats() {
     }
   }, [])
 
-  // Initial fetch
   useEffect(() => { fetchStats() }, [fetchStats])
 
-  // WebSocket for real-time execution events
   useEffect(() => {
-    const socket = socketIO('/?XTransformPort=3003', {
-      transports: ['websocket', 'polling'],
-      forceNew: false,
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 2000,
-    })
+    const socket = socketIO('/?XTransformPort=3003', { transports: ['websocket', 'polling'], forceNew: false, reconnection: true, reconnectionAttempts: Infinity, reconnectionDelay: 2000 })
     socketRef.current = socket
-
-    // Agent step execution started
-    socket.on('agent:executing', (data: { agentId: string; stepName: string; workflowId: string }) => {
-      setStats(prev => {
-        const existing = prev[data.agentId] || { totalRuns: 0, completedRuns: 0, failedRuns: 0, avgScore: 0, lastExecutedAt: null, isRunning: false }
-        return {
-          ...prev,
-          [data.agentId]: {
-            ...existing,
-            isRunning: true,
-            totalRuns: existing.totalRuns + 1,
-            lastExecutedAt: new Date().toISOString(),
-          },
-        }
-      })
-    })
-
-    // Agent step execution completed
-    socket.on('agent:step-completed', (data: { agentId: string; score?: number; status: string }) => {
-      setStats(prev => {
-        const existing = prev[data.agentId]
-        if (!existing) return prev
-        return {
-          ...prev,
-          [data.agentId]: {
-            ...existing,
-            isRunning: false,
-            completedRuns: existing.completedRuns + 1,
-            // Update avg score incrementally
-            avgScore: data.score !== undefined
-              ? Math.round(((existing.avgScore * existing.completedRuns + data.score) / (existing.completedRuns + 1)) * 10) / 10
-              : existing.avgScore,
-          },
-        }
-      })
-    })
-
-    // Agent step execution failed
-    socket.on('agent:step-failed', (data: { agentId: string; error: string }) => {
-      setStats(prev => {
-        const existing = prev[data.agentId]
-        if (!existing) return prev
-        return {
-          ...prev,
-          [data.agentId]: {
-            ...existing,
-            isRunning: false,
-            failedRuns: existing.failedRuns + 1,
-          },
-        }
-      })
-    })
-
-    // Refresh all stats periodically (every 30s)
+    socket.on('agent:executing', (d: { agentId: string }) => handleExecuting(setStats, d.agentId))
+    socket.on('agent:step-completed', (d: { agentId: string; score?: number }) => handleStepCompleted(setStats, d.agentId, d.score))
+    socket.on('agent:step-failed', (d: { agentId: string }) => handleStepFailed(setStats, d.agentId))
     const interval = setInterval(fetchStats, 30000)
-
-    return () => {
-      socket.disconnect()
+      return () => { socket.disconnect()
       socketRef.current = null
-      clearInterval(interval)
-    }
+      clearInterval(interval) }
   }, [fetchStats])
 
   return { stats, loading, refetch: fetchStats }

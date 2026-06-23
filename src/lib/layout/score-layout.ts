@@ -7,6 +7,8 @@ import type {
   LayoutRecipe, LayoutAdviceInput, LayoutRecommendation,
 } from './types'
 
+export type MultiGoalRecommendation = LayoutRecommendation & { goalBreakdown: Record<string, number> }
+
 // ─── Scoring Weights ──────────────────────────────────────────
 
 export const WEIGHTS = {
@@ -49,63 +51,76 @@ export const goalPreferences: Record<string, { prefer: string[]; avoid: string[]
 
 // ─── Single-goal Scoring ──────────────────────────────────────
 
-export function scoreLayout(recipe: LayoutRecipe, input: LayoutAdviceInput): LayoutRecommendation {
-  let score = 50
+function scoreGoalMatch(recipe: LayoutRecipe, input: LayoutAdviceInput): { score: number; reasons: string[] } {
+  let score = 0
   const reasons: string[] = []
-
-  if (recipe.bestFor.includes(input.goal)) {
-    score += WEIGHTS.goalMatch
-    reasons.push(`Optimized for ${input.goal}`)
-  }
-  if (recipe.conflicts.includes(input.goal)) {
-    score += WEIGHTS.goalConflict
-    reasons.push(`Conflicts with ${input.goal}`)
-  }
-
+  if (recipe.bestFor.includes(input.goal)) { score += WEIGHTS.goalMatch; reasons.push(`Optimized for ${input.goal}`) }
+  if (recipe.conflicts.includes(input.goal)) { score += WEIGHTS.goalConflict; reasons.push(`Conflicts with ${input.goal}`) }
   const prefs = goalPreferences[input.goal]
   if (prefs) {
     if (prefs.prefer.includes(recipe.structure)) { score += 8; reasons.push(`Popular for ${input.goal}`) }
     if (prefs.avoid.includes(recipe.structure)) { score -= 5; reasons.push(`Rarely used for ${input.goal}`) }
   }
+  return { score, reasons }
+}
 
-  if (input.contentType) {
-    const preferred = contentAffinity[input.contentType] ?? []
-    if (preferred.includes(recipe.structure)) {
-      score += WEIGHTS.contentAffinity
-      reasons.push(`Good for ${input.contentType}`)
-    }
-  }
+function scoreContentAffinity(recipe: LayoutRecipe, input: LayoutAdviceInput): { score: number; reasons: string[] } {
+  if (!input.contentType) return { score: 0, reasons: [] }
+  const preferred = contentAffinity[input.contentType] ?? []
+  if (preferred.includes(recipe.structure)) return { score: WEIGHTS.contentAffinity, reasons: [`Good for ${input.contentType}`] }
+  return { score: 0, reasons: [] }
+}
 
-  if (input.itemCount !== undefined) {
-    if (input.itemCount <= 1 && ['fullscreen-hero', 'split-screen', 'top-nav', 'login-split'].includes(recipe.structure)) {
-      score += WEIGHTS.itemCountFit; reasons.push('Single-item focus')
-    } else if (input.itemCount <= 6 && ['bento-grid', 'bento-hero', 'span-grid', 'magazine', 'grid-overlap', 'dense-packing'].includes(recipe.structure)) {
-      score += WEIGHTS.itemCountFit; reasons.push('Small collection')
-    } else if (input.itemCount > 6 && ['cards-grid', 'responsive-grid', 'masonry-grid', 'blog', 'auto-flow-column', 'container-query-grid'].includes(recipe.structure)) {
-      score += WEIGHTS.itemCountFit; reasons.push('Large collection')
-    }
-  }
+function scoreItemCountFit(recipe: LayoutRecipe, itemCount: number | undefined): { score: number; reasons: string[] } {
+  if (itemCount === undefined) return { score: 0, reasons: [] }
+  if (itemCount <= 1 && ['fullscreen-hero', 'split-screen', 'top-nav', 'login-split'].includes(recipe.structure))
+    return { score: WEIGHTS.itemCountFit, reasons: ['Single-item focus'] }
+  if (itemCount <= 6 && ['bento-grid', 'bento-hero', 'span-grid', 'magazine', 'grid-overlap', 'dense-packing'].includes(recipe.structure))
+    return { score: WEIGHTS.itemCountFit, reasons: ['Small collection'] }
+  if (itemCount > 6 && ['cards-grid', 'responsive-grid', 'masonry-grid', 'blog', 'auto-flow-column', 'container-query-grid'].includes(recipe.structure))
+    return { score: WEIGHTS.itemCountFit, reasons: ['Large collection'] }
+  return { score: 0, reasons: [] }
+}
 
-  let structBonus = 0
+function scoreStructureMatch(recipe: LayoutRecipe, input: LayoutAdviceInput): { bonus: number; reasons: string[] } {
+  let bonus = 0
+  const reasons: string[] = []
   if (input.needsSidebar) {
     const has = recipe.regions.some(r => r.name === 'sidebar')
-    structBonus += has ? 5 : -5
+    bonus += has ? 5 : -5
     if (has) reasons.push('Has sidebar')
   }
-  if (input.needsHeader) {
-    structBonus += recipe.regions.some(r => r.name === 'header') ? 5 : -3
-  }
-  if (input.needsFooter) {
-    structBonus += recipe.regions.some(r => r.name === 'footer') ? 5 : -3
-  }
-  score += Math.max(-WEIGHTS.structureMatch, Math.min(WEIGHTS.structureMatch, structBonus))
+  if (input.needsHeader) bonus += recipe.regions.some(r => r.name === 'header') ? 5 : -3
+  if (input.needsFooter) bonus += recipe.regions.some(r => r.name === 'footer') ? 5 : -3
+  return { bonus: Math.max(-WEIGHTS.structureMatch, Math.min(WEIGHTS.structureMatch, bonus)), reasons }
+}
+
+function computeVerdict(recipe: LayoutRecipe, score: number): LayoutRecommendation['verdict'] {
+  if (recipe.conflicts.includes(recipe.structure)) return 'error'
+  if (score >= 70) return 'recommended'
+  if (score >= 40) return 'warning'
+  return 'error'
+}
+
+export function scoreLayout(recipe: LayoutRecipe, input: LayoutAdviceInput): LayoutRecommendation {
+  let score = 50
+  const reasons: string[] = []
+
+    const gm = scoreGoalMatch(recipe, input);
+    score += gm.score;
+    reasons.push(...gm.reasons)
+    const ca = scoreContentAffinity(recipe, input);
+    score += ca.score;
+    reasons.push(...ca.reasons)
+    const ic = scoreItemCountFit(recipe, input.itemCount);
+    score += ic.score;
+    reasons.push(...ic.reasons)
+    const sm = scoreStructureMatch(recipe, input);
+    score += sm.bonus;
+    reasons.push(...sm.reasons)
 
   score = Math.max(0, Math.min(100, score))
-
-  let verdict: LayoutRecommendation['verdict'] = 'error'
-  if (recipe.conflicts.includes(input.goal)) verdict = 'error'
-  else if (score >= 70) verdict = 'recommended'
-  else if (score >= 40) verdict = 'warning'
+  const verdict = computeVerdict(recipe, score)
 
   return {
     structure: recipe.structure, recipe, score, verdict,
@@ -115,11 +130,48 @@ export function scoreLayout(recipe: LayoutRecipe, input: LayoutAdviceInput): Lay
 
 // ─── Multi-goal Scoring ───────────────────────────────────────
 
+function applyConflictMitigation(
+  recipe: LayoutRecipe, goal: string, goalCount: number,
+  goalWeights: Record<string, number>, singleScore: number,
+): number {
+  if (!recipe.conflicts.includes(goal) || goalCount <= 1) return singleScore
+  const nonConflicting = Object.keys(goalWeights).filter(
+    g => g !== goal && goalWeights[g] > 0 && !recipe.conflicts.includes(g),
+  )
+  const restoreRatio = nonConflicting.length / (goalCount - 1)
+  const penaltyRestore = Math.round(Math.abs(WEIGHTS.goalConflict) * restoreRatio * 0.7)
+  return Math.min(100, singleScore + penaltyRestore)
+}
+
+function applyStructuralPenalty(
+  input: LayoutAdviceInput, recipe: LayoutRecipe, score: number, goalCount: number,
+): number {
+  if (goalCount <= 1) return score
+  const regionNames = recipe.regions.map(r => r.name)
+  let missing = 0
+  if (input.needsSidebar && !regionNames.includes('sidebar')) missing++
+  if (input.needsHeader && !regionNames.includes('header')) missing++
+  if (input.needsFooter && !regionNames.includes('footer')) missing++
+  return missing > 0 ? Math.max(0, score - missing * 8) : score
+}
+
+function applySynergyAndPenalties(
+  goalBreakdown: Record<string, number>, goalWeights: Record<string, number>,
+  score: number, goalCount: number,
+): number {
+  let s = score
+  const highScoring = Object.values(goalBreakdown).filter(v => v >= 65).length
+  if (highScoring >= 2) s = Math.min(100, s + Math.min(8, highScoring * 3))
+  if (Object.values(goalBreakdown).every(v => v >= 50) && goalCount >= 2) s = Math.min(100, s + 4)
+  if (Object.entries(goalBreakdown).some(([g, v]) => (goalWeights[g] ?? 0) > 0.25 && v < 25)) s = Math.max(0, s - 12)
+  return s
+}
+
 export function scoreLayoutMulti(
   recipe: LayoutRecipe,
   input: LayoutAdviceInput,
   goalWeights: Record<string, number>,
-): LayoutRecommendation & { goalBreakdown: Record<string, number> } {
+): MultiGoalRecommendation {
   const goalBreakdown: Record<string, number> = {}
   let totalWeight = 0
   let weightedScore = 0
@@ -128,65 +180,22 @@ export function scoreLayoutMulti(
 
   for (const [goal, weight] of Object.entries(goalWeights)) {
     if (weight <= 0) continue
-    const singleInput = { ...input, goal }
-    const single = scoreLayout(recipe, singleInput)
-
-    // Multi-goal conflict mitigation
-    let adjustedScore = single.score
-    if (recipe.conflicts.includes(goal) && goalCount > 1) {
-      const nonConflictingGoals = Object.keys(goalWeights).filter(
-        g => g !== goal && goalWeights[g] > 0 && !recipe.conflicts.includes(g),
-      )
-      const restoreRatio = nonConflictingGoals.length / (goalCount - 1)
-      const penaltyRestore = Math.round(Math.abs(WEIGHTS.goalConflict) * restoreRatio * 0.7)
-      adjustedScore = Math.min(100, single.score + penaltyRestore)
-    }
-
-    goalBreakdown[goal] = adjustedScore
-    weightedScore += adjustedScore * weight
+    const single = scoreLayout(recipe, { ...input, goal })
+    const adjusted = applyConflictMitigation(recipe, goal, goalCount, goalWeights, single.score)
+    goalBreakdown[goal] = adjusted
+    weightedScore += adjusted * weight
     totalWeight += weight
     if (single.reason && single.reason !== 'Neutral match') allReasons.push(`[${goal}] ${single.reason}`)
   }
 
   let finalScore = totalWeight > 0 ? Math.round(weightedScore / totalWeight) : 50
+  finalScore = applyStructuralPenalty(input, recipe, finalScore, goalCount)
+  finalScore = applySynergyAndPenalties(goalBreakdown, goalWeights, finalScore, goalCount)
 
-  // Structural adequacy penalty in multi-goal mode
-  const regionNames = recipe.regions.map(r => r.name)
-  const structMissing: string[] = []
-  if (input.needsSidebar && !regionNames.includes('sidebar')) structMissing.push('sidebar')
-  if (input.needsHeader && !regionNames.includes('header')) structMissing.push('header')
-  if (input.needsFooter && !regionNames.includes('footer')) structMissing.push('footer')
-  if (structMissing.length > 0 && goalCount > 1) {
-    finalScore = Math.max(0, finalScore - structMissing.length * 8)
-  }
-
-  // Synergy bonus
-  const highScoringGoals = Object.entries(goalBreakdown).filter(([, s]) => s >= 65).length
-  if (highScoringGoals >= 2) {
-    finalScore = Math.min(100, finalScore + Math.min(8, highScoringGoals * 3))
-  }
-
-  // Versatility bonus
-  const allGoalsModerate = Object.values(goalBreakdown).every(s => s >= 50)
-  if (allGoalsModerate && goalCount >= 2) {
-    finalScore = Math.min(100, finalScore + 4)
-  }
-
-  // Critical miss penalty
-  const hasCriticalMiss = Object.entries(goalBreakdown).some(
-    ([g, s]) => (goalWeights[g] ?? 0) > 0.25 && s < 25,
-  )
-  if (hasCriticalMiss) finalScore = Math.max(0, finalScore - 12)
-
-  // Conflict verdict: only error if conflicting goal has dominant weight
-  const dominantConflict = Object.entries(goalWeights).some(
-    ([g, w]) => w > 0.5 && recipe.conflicts.includes(g),
-  )
-
+  const dominantConflict = Object.entries(goalWeights).some(([g, w]) => w > 0.5 && recipe.conflicts.includes(g))
   let verdict: LayoutRecommendation['verdict'] = 'warning'
   if (dominantConflict) verdict = 'error'
   else if (finalScore >= 70) verdict = 'recommended'
-  else if (finalScore >= 40) verdict = 'warning'
 
   return {
     structure: recipe.structure, recipe, score: finalScore, verdict,

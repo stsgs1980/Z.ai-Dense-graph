@@ -43,7 +43,9 @@ export default function PromptStudio({ onBack }: { onBack?: () => void }) {
 
   // Auto-analyze after prompt update from history selection
   useEffect(() => {
-    if (autoAnalyze && prompt.trim()) { analyze(); setAutoAnalyze(false) }
+    if (autoAnalyze && prompt.trim()) {
+      analyze(); setAutoAnalyze(false)
+    }
   }, [autoAnalyze, prompt, analyze])
 
   const handleHistorySelect = useCallback((newPrompt: string) => {
@@ -103,8 +105,16 @@ function ErrorBanner({ message }: { message: string }) {
 }
 
 function InputArea({ prompt, setPrompt, analyzing, onAnalyze, onClear, placeholder, showQuality, onToggleQuality, showCompare, onToggleCompare }: {
-  prompt: string; setPrompt: (v: string) => void; analyzing: boolean; onAnalyze: () => void; onClear: () => void; placeholder: string
-  showQuality: boolean; onToggleQuality: () => void; showCompare: boolean; onToggleCompare: () => void
+    prompt: string
+    setPrompt: (v: string) => void
+    analyzing: boolean
+    onAnalyze: () => void
+    onClear: () => void
+    placeholder: string
+    showQuality: boolean
+    onToggleQuality: () => void
+    showCompare: boolean
+    onToggleCompare: () => void
 }) {
   return (
     <div className="space-y-4 mb-8">

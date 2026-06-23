@@ -24,7 +24,6 @@ export function PromptQualityScore({ prompt }: { prompt: string }) {
     <div className="space-y-5 mt-6">
       <SectionLabel>Quality Score</SectionLabel>
       <div className="rounded-xl p-5" style={{ background: '#0A0A0A', border: '1px solid rgba(51,51,51,0.3)' }}>
-        {/* Top row: Grade + Numeric + Label */}
         <div className="flex items-center gap-4 mb-5">
           <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-black"
             style={{ background: gc.bg, color: gc.color, border: `1px solid ${gc.border}` }}>
@@ -36,38 +35,44 @@ export function PromptQualityScore({ prompt }: { prompt: string }) {
             <p className="text-[10px] font-semibold uppercase tracking-wider mt-0.5" style={{ color: '#64748B' }}>Quality Score</p>
           </div>
         </div>
-
-        {/* 6 Dimension Bars */}
-        <div className="space-y-3">
-          {score.dimensions.map((dim: ScoreDimension) => (
-            <div key={dim.name}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium" style={{ color: '#94A3B8' }}>{dim.name}</span>
-                <span className="text-xs font-bold" style={{ color: barColor(dim.grade) }}>{dim.score}</span>
-              </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                <div className="h-full rounded-full transition-all duration-500"
-                  style={{ width: `${dim.score}%`, background: barColor(dim.grade) }} />
-              </div>
-              <p className="text-[10px] mt-1" style={{ color: '#475569' }}>{dim.feedback}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Suggestions */}
-        {score.suggestions.length > 0 && (
-          <div className="mt-5 pt-4" style={{ borderTop: '1px solid rgba(51,51,51,0.2)' }}>
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#06B6D4' }}>Top Suggestions</span>
-            <ul className="mt-2 space-y-1.5">
-              {score.suggestions.map((s, i) => (
-                <li key={i} className="text-[11px] flex items-start gap-2" style={{ color: '#94A3B8' }}>
-                  <span style={{ color: '#06B6D4' }}>&bull;</span>{s}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <DimensionBars dimensions={score.dimensions} />
+        {score.suggestions.length > 0 && <SuggestionsSection suggestions={score.suggestions} />}
       </div>
+    </div>
+  )
+}
+
+function DimensionBars({ dimensions }: { dimensions: ScoreDimension[] }) {
+  return (
+    <div className="space-y-3">
+      {dimensions.map((dim: ScoreDimension) => (
+        <div key={dim.name}>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium" style={{ color: '#94A3B8' }}>{dim.name}</span>
+            <span className="text-xs font-bold" style={{ color: barColor(dim.grade) }}>{dim.score}</span>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+            <div className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${dim.score}%`, background: barColor(dim.grade) }} />
+          </div>
+          <p className="text-[10px] mt-1" style={{ color: '#475569' }}>{dim.feedback}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function SuggestionsSection({ suggestions }: { suggestions: string[] }) {
+  return (
+    <div className="mt-5 pt-4" style={{ borderTop: '1px solid rgba(51,51,51,0.2)' }}>
+      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#06B6D4' }}>Top Suggestions</span>
+      <ul className="mt-2 space-y-1.5">
+        {suggestions.map((s, i) => (
+          <li key={i} className="text-[11px] flex items-start gap-2" style={{ color: '#94A3B8' }}>
+            <span style={{ color: '#06B6D4' }}>&bull;</span>{s}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

@@ -17,11 +17,12 @@ interface StepEval {
 }
 
 function parseEval(data: string): StepEval | null {
-  try {
-    return JSON.parse(data)
-  } catch {
-    return null
-  }
+  try { return JSON.parse(data) } catch { return null }
+}
+
+function getScoreColor(score: number | undefined): string {
+  if (!score) return '#475569'
+  return score >= 80 ? '#22C55E' : score >= 50 ? '#EAB308' : '#EF4444'
 }
 
 // ─── Main Component ────────────────────────────────────────
@@ -33,24 +34,13 @@ interface ExecutionResultProps {
 export function ExecutionResult({ result }: ExecutionResultProps) {
   const completedSteps = result.steps.filter((s) => s.status === 'completed')
   const failedCount = result.steps.filter((s) => s.status === 'failed').length
-
-  // Compute aggregate score from completed steps
-  const scores = completedSteps
-    .map((s) => parseEval(s.outputData)?.score)
-    .filter((s): s is number => typeof s === 'number')
+  const scores = completedSteps.map((s) => parseEval(s.outputData)?.score).filter((s): s is number => typeof s === 'number')
   const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : null
-
-  // Count issues across all steps
-  const totalIssues = completedSteps.reduce((acc, s) => {
-    const ev = parseEval(s.outputData)
-    return acc + (ev?.issues?.length || 0)
-  }, 0)
+  const totalIssues = completedSteps.reduce((acc, s) => acc + (parseEval(s.outputData)?.issues?.length || 0), 0)
 
   return (
     <div className="space-y-5 mt-6">
       <SectionLabel>Execution Result</SectionLabel>
-
-      {/* Score bar */}
       <div className="rounded-xl p-5" style={{ background: '#0A0A0A', border: '1px solid rgba(51,51,51,0.3)' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
@@ -58,9 +48,7 @@ export function ExecutionResult({ result }: ExecutionResultProps) {
             <div>
               <StatusBadge status={result.status} />
               <div className="flex items-center gap-3 mt-1.5">
-                <span className="text-xs" style={{ color: '#64748B' }}>
-                  {completedSteps.length}/{result.steps.length} steps
-                </span>
+                <span className="text-xs" style={{ color: '#64748B' }}>{completedSteps.length}/{result.steps.length} steps</span>
                 {failedCount > 0 && <span className="text-xs" style={{ color: '#EF4444' }}>{failedCount} failed</span>}
                 {totalIssues > 0 && <span className="text-xs" style={{ color: '#EAB308' }}>{totalIssues} issues</span>}
               </div>
@@ -68,8 +56,6 @@ export function ExecutionResult({ result }: ExecutionResultProps) {
           </div>
           <span className="text-xs font-mono" style={{ color: '#475569' }}>ID: {result.id.slice(-8)}</span>
         </div>
-
-        {/* Steps */}
         <div className="space-y-2">
           {result.steps.map((step, i) => (
             <EvalStepRow key={step.id} step={step} index={i} />
@@ -83,7 +69,7 @@ export function ExecutionResult({ result }: ExecutionResultProps) {
 // ─── Score Circle ──────────────────────────────────────────
 
 function ScoreCircle({ score }: { score: number }) {
-  const color = score >= 80 ? '#22C55E' : score >= 50 ? '#EAB308' : '#EF4444'
+  const color = getScoreColor(score)
   const label = score >= 80 ? 'Good' : score >= 50 ? 'Fair' : 'Poor'
   return (
     <div className="flex flex-col items-center gap-1">
@@ -101,12 +87,7 @@ function EvalStepRow({ step, index }: { step: StepResult; index: number }) {
   const [expanded, setExpanded] = useState(false)
   const eval_ = parseEval(step.outputData)
   const duration = getDuration(step.startedAt, step.completedAt)
-
-  const scoreColor = !eval_?.score ? '#475569'
-    : eval_.score >= 80 ? '#22C55E'
-    : eval_.score >= 50 ? '#EAB308'
-    : '#EF4444'
-
+  const scoreColor = getScoreColor(eval_?.score)
   const issueCount = eval_?.issues?.length || 0
 
   return (
@@ -118,29 +99,19 @@ function EvalStepRow({ step, index }: { step: StepResult; index: number }) {
         <StepStatusIcon status={step.status} />
         <span className="text-xs font-semibold" style={{ color: '#94A3B8' }}>{index + 1}</span>
         <span className="text-sm font-medium text-white flex-1">{step.name}</span>
-
-        {/* Mini score badge */}
         {eval_?.score !== undefined && step.status === 'completed' && (
-          <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: `rgba(${hexToRgb(scoreColor)},0.12)`, color: scoreColor }}>
-            {eval_.score}
-          </span>
+          <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ background: `rgba(${hexToRgb(scoreColor)},0.12)`, color: scoreColor }}>{eval_.score}</span>
         )}
-
-        {/* Issue count */}
         {issueCount > 0 && (
           <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444' }}>
             <AlertTriangle size={10} />{issueCount}
           </span>
         )}
-
-        {/* Verdict badge */}
         {eval_?.verdict && step.status === 'completed' && <VerdictBadge verdict={eval_.verdict} />}
-
         <span className="text-xs font-medium" style={{ color: '#64748B' }}>{step.agentName}</span>
         {duration && <span className="text-xs font-mono" style={{ color: '#475569' }}>{duration}</span>}
         {expanded ? <ChevronDown size={14} style={{ color: '#475569' }} /> : <ChevronRight size={14} style={{ color: '#475569' }} />}
       </button>
-
       {expanded && (
         <div className="px-4 pb-4 space-y-3 border-t" style={{ borderColor: 'rgba(51,51,51,0.2)' }}>
           {step.status === 'completed' && eval_ ? (
@@ -151,9 +122,7 @@ function EvalStepRow({ step, index }: { step: StepResult; index: number }) {
             <RawDataBlock data={step.outputData} />
           )}
           {step.error && (
-            <div className="px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>
-              Error: {step.error}
-            </div>
+            <div className="px-3 py-2 rounded-lg text-xs" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.2)' }}>Error: {step.error}</div>
           )}
         </div>
       )}
@@ -164,64 +133,65 @@ function EvalStepRow({ step, index }: { step: StepResult; index: number }) {
 // ─── Eval Detail (structured view) ─────────────────────────
 
 function EvalDetail({ eval_, rawData }: { eval_: StepEval; rawData: string }) {
-  const scoreColor = typeof eval_.score === 'number'
-    ? eval_.score >= 80 ? '#22C55E' : eval_.score >= 50 ? '#EAB308' : '#EF4444'
-    : '#475569'
+  const scoreColor = getScoreColor(eval_.score)
 
   return (
     <div className="space-y-3">
-      {/* Summary line */}
       {eval_.summary && (
         <div className="px-3 py-2.5 rounded-lg" style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(51,51,51,0.2)' }}>
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#64748B' }}>Summary</span>
           <p className="text-xs text-white mt-1">{eval_.summary}</p>
         </div>
       )}
-
-      {/* Score + Verdict row */}
-      <div className="flex items-center gap-3">
-        {typeof eval_.score === 'number' && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: `rgba(${hexToRgb(scoreColor)},0.08)`, border: `1px solid rgba(${hexToRgb(scoreColor)},0.2)` }}>
-            <span className="text-[10px] font-bold uppercase" style={{ color: '#475569' }}>Score</span>
-            <span className="text-sm font-bold" style={{ color: scoreColor }}>{eval_.score}/100</span>
-          </div>
-        )}
-        {eval_.verdict && <VerdictBadge verdict={eval_.verdict} large />}
-        {eval_.status && <StatusPill status={eval_.status} />}
-      </div>
-
-      {/* Issues */}
-      {eval_.issues && eval_.issues.length > 0 && (
-        <div className="px-3 py-2.5 rounded-lg" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#EF4444' }}>Issues ({eval_.issues.length})</span>
-          <ul className="mt-1.5 space-y-1">
-            {eval_.issues.map((issue, i) => (
-              <li key={i} className="text-xs flex items-start gap-2" style={{ color: '#FCA5A5' }}>
-                <XCircle size={12} className="mt-0.5 flex-shrink-0" style={{ color: '#EF4444' }} />
-                {issue}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Suggestions */}
-      {eval_.suggestions && eval_.suggestions.length > 0 && (
-        <div className="px-3 py-2.5 rounded-lg" style={{ background: 'rgba(6,182,212,0.05)', border: '1px solid rgba(6,182,212,0.15)' }}>
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#06B6D4' }}>Suggestions ({eval_.suggestions.length})</span>
-          <ul className="mt-1.5 space-y-1">
-            {eval_.suggestions.map((s, i) => (
-              <li key={i} className="text-xs flex items-start gap-2" style={{ color: '#67E8F9' }}>
-                <CheckCircle2 size={12} className="mt-0.5 flex-shrink-0" style={{ color: '#06B6D4' }} />
-                {s}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Raw JSON toggle */}
+      <EvalMetaRow eval_={eval_} scoreColor={scoreColor} />
+      {eval_.issues && eval_.issues.length > 0 && <IssuesList issues={eval_.issues} />}
+      {eval_.suggestions && eval_.suggestions.length > 0 && <SuggestionsList suggestions={eval_.suggestions} />}
       <RawDataBlock data={rawData} />
+    </div>
+  )
+}
+
+function EvalMetaRow({ eval_, scoreColor }: { eval_: StepEval; scoreColor: string }) {
+  return (
+    <div className="flex items-center gap-3">
+      {typeof eval_.score === 'number' && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: `rgba(${hexToRgb(scoreColor)},0.08)`, border: `1px solid rgba(${hexToRgb(scoreColor)},0.2)` }}>
+          <span className="text-[10px] font-bold uppercase" style={{ color: '#475569' }}>Score</span>
+          <span className="text-sm font-bold" style={{ color: scoreColor }}>{eval_.score}/100</span>
+        </div>
+      )}
+      {eval_.verdict && <VerdictBadge verdict={eval_.verdict} large />}
+      {eval_.status && <StatusPill status={eval_.status} />}
+    </div>
+  )
+}
+
+function IssuesList({ issues }: { issues: string[] }) {
+  return (
+    <div className="px-3 py-2.5 rounded-lg" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#EF4444' }}>Issues ({issues.length})</span>
+      <ul className="mt-1.5 space-y-1">
+        {issues.map((issue, i) => (
+          <li key={i} className="text-xs flex items-start gap-2" style={{ color: '#FCA5A5' }}>
+            <XCircle size={12} className="mt-0.5 flex-shrink-0" style={{ color: '#EF4444' }} />{issue}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function SuggestionsList({ suggestions }: { suggestions: string[] }) {
+  return (
+    <div className="px-3 py-2.5 rounded-lg" style={{ background: 'rgba(6,182,212,0.05)', border: '1px solid rgba(6,182,212,0.15)' }}>
+      <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#06B6D4' }}>Suggestions ({suggestions.length})</span>
+      <ul className="mt-1.5 space-y-1">
+        {suggestions.map((s, i) => (
+          <li key={i} className="text-xs flex items-start gap-2" style={{ color: '#67E8F9' }}>
+            <CheckCircle2 size={12} className="mt-0.5 flex-shrink-0" style={{ color: '#06B6D4' }} />{s}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
@@ -233,30 +203,19 @@ function RawDataBlock({ data }: { data: string }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(data)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    } catch { /* ignore */ }
+    try { await navigator.clipboard.writeText(data); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* ignore */ }
   }, [data])
 
   return (
     <div>
       <div className="flex items-center gap-2">
-        <button
-          onClick={() => setShow(!show)}
-          className="flex items-center gap-1 text-[10px] font-medium transition-all hover:opacity-80"
-          style={{ color: '#475569' }}
-        >
+        <button onClick={() => setShow(!show)} className="flex items-center gap-1 text-[10px] font-medium transition-all hover:opacity-80" style={{ color: '#475569' }}>
           {show ? <FileText size={10} /> : <FileJson size={10} />}
           {show ? 'Hide raw JSON' : 'Show raw JSON'}
         </button>
         {show && (
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all hover:opacity-80"
-            style={{ background: 'rgba(255,255,255,0.05)', color: '#64748B', border: '1px solid rgba(51,51,51,0.3)' }}
-          >
+          <button onClick={handleCopy} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-all hover:opacity-80"
+            style={{ background: 'rgba(255,255,255,0.05)', color: '#64748B', border: '1px solid rgba(51,51,51,0.3)' }}>
             {copied ? <><Check size={10} style={{ color: '#22C55E' }} />Copied</> : <><Copy size={10} />Copy</>}
           </button>
         )}
@@ -279,9 +238,7 @@ function VerdictBadge({ verdict, large }: { verdict: string; large?: boolean }) 
   const style = map[verdict.toLowerCase()] || map['needs-work']
   const cls = large ? 'px-3 py-1.5 text-xs' : 'px-2 py-0.5 text-[10px]'
   return (
-    <span className={`${cls} font-bold uppercase rounded`} style={{ background: style.bg, color: style.color, border: `1px solid ${style.border}` }}>
-      {verdict}
-    </span>
+    <span className={`${cls} font-bold uppercase rounded`} style={{ background: style.bg, color: style.color, border: `1px solid ${style.border}` }}>{verdict}</span>
   )
 }
 
@@ -295,9 +252,7 @@ function StatusPill({ status }: { status: string }) {
   }
   const s = map[status.toLowerCase()] || map.warning
   return (
-    <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded" style={{ background: s.bg, color: s.color }}>
-      {status}
-    </span>
+    <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded" style={{ background: s.bg, color: s.color }}>{status}</span>
   )
 }
 
@@ -341,11 +296,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function formatJson(data: string): string {
-  try {
-    return JSON.stringify(JSON.parse(data), null, 2)
-  } catch {
-    return data
-  }
+  try { return JSON.stringify(JSON.parse(data), null, 2) } catch { return data }
 }
 
 function hexToRgb(hex: string): string {

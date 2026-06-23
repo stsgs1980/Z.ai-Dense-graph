@@ -27,180 +27,124 @@ export interface StatsResult {
   networkActivity: number[]
 }
 
-export async function computeStats(): Promise<StatsResult> {
-  // ── Fetch all data from database ──────────────────────────────────────────
-  const agents = await db.agent.findMany({
-    include: {
-      tasks: true,
-      parent: { select: { id: true, name: true, roleGroup: true } },
-      twin: { select: { id: true, name: true, roleGroup: true } },
-      children: { select: { id: true, name: true, roleGroup: true } },
-    },
-  })
-
-  const tasks = await db.task.findMany({
-    include: {
-      agent: { select: { id: true, name: true, roleGroup: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
-
-  // ── Quick Stats ───────────────────────────────────────────────────────────
-  const totalAgents = agents.length
+function computeQuickStats(agents: any[], tasks: any[]) {
   const uniqueRoleGroups = new Set(agents.map((a) => a.roleGroup))
-  const roleGroupsCount = uniqueRoleGroups.size
   const uniqueFormulas = new Set(agents.map((a) => a.formula))
-  const cognitiveFormulas = uniqueFormulas.size
-  const edgeTypes = 6
-  const activeAgents = agents.filter((a) => a.status === 'active').length
-  const idleAgents = agents.filter((a) => a.status === 'idle').length
-  const totalTasks = tasks.length
-  const formulasCoverage = ALL_KNOWN_FORMULAS.length > 0
-    ? Math.round((cognitiveFormulas / ALL_KNOWN_FORMULAS.length) * 100)
-    : 0
-
-  const quickStats = {
-    totalAgents,
-    roleGroups: roleGroupsCount,
-    cognitiveFormulas,
-    edgeTypes,
-    activeAgents,
-    idleAgents,
-    totalTasks,
-    formulasCoverage,
+  return {
+    totalAgents: agents.length,
+    roleGroups: uniqueRoleGroups.size,
+    cognitiveFormulas: uniqueFormulas.size,
+    edgeTypes: 6,
+    activeAgents: agents.filter((a) => a.status === 'active').length,
+    idleAgents: agents.filter((a) => a.status === 'idle').length,
+    totalTasks: tasks.length,
+    formulasCoverage: ALL_KNOWN_FORMULAS.length > 0 ? Math.round((uniqueFormulas.size / ALL_KNOWN_FORMULAS.length) * 100) : 0,
   }
+}
 
-  // ── Status Distribution ───────────────────────────────────────────────────
+function computeStatusDistribution(agents: any[]) {
   const statusCounts: Record<string, number> = {}
-  for (const sc of STATUS_CONFIG) {
-    statusCounts[sc.status] = 0
-  }
+  for (const sc of STATUS_CONFIG) statusCounts[sc.status] = 0
   for (const agent of agents) {
     const s = agent.status.toLowerCase()
-    if (s in statusCounts) {
-      statusCounts[s]++
-    }
+    if (s in statusCounts) statusCounts[s]++
   }
+  return STATUS_CONFIG.map((sc) => ({ label: sc.label, status: sc.status, count: statusCounts[sc.status] || 0, color: sc.color }))
+}
 
-  const statusDistribution = STATUS_CONFIG.map((sc) => ({
-    label: sc.label,
-    status: sc.status,
-    count: statusCounts[sc.status] || 0,
-    color: sc.color,
-  }))
+function computeGroupStatusSummary(groupAgents: any[]) {
+  const counts: Record<string, number> = {}
+  for (const agent of groupAgents) {
+    const s = agent.status.toLowerCase()
+    counts[s] = (counts[s] || 0) + 1
+  }
+  const summary: { color: string; label: string }[] = []
+  for (const sc of STATUS_CONFIG) {
+    const count = counts[sc.status]
+    if (count && count > 0) summary.push({ color: sc.color, label: `${count} ${sc.status}` })
+  }
+  return summary
+}
 
-  // ── Role Groups ───────────────────────────────────────────────────────────
+function computeRoleGroups(agents: any[]) {
   const agentsByGroup: Record<string, typeof agents> = {}
   for (const agent of agents) {
-    if (!agentsByGroup[agent.roleGroup]) {
-      agentsByGroup[agent.roleGroup] = []
-    }
+    if (!agentsByGroup[agent.roleGroup]) agentsByGroup[agent.roleGroup] = []
     agentsByGroup[agent.roleGroup].push(agent)
   }
-
-  const roleGroups = ROLE_GROUP_ORDER.map((groupName) => {
+  return ROLE_GROUP_ORDER.map((groupName) => {
     const config = ROLE_GROUP_CONFIG[groupName]
     const groupAgents = agentsByGroup[groupName] || []
-    const groupActiveAgents = groupAgents.filter((a) => a.status === 'active').length
-    const groupFormulas = [...new Set(groupAgents.map((a) => a.formula))].join(', ')
-
-    const statusCountsInGroup: Record<string, number> = {}
-    for (const agent of groupAgents) {
-      const s = agent.status.toLowerCase()
-      statusCountsInGroup[s] = (statusCountsInGroup[s] || 0) + 1
-    }
-
-    const statusSummary: { color: string; label: string }[] = []
-    for (const sc of STATUS_CONFIG) {
-      const count = statusCountsInGroup[sc.status]
-      if (count && count > 0) {
-        statusSummary.push({
-          color: sc.color,
-          label: `${count} ${sc.status}`,
-        })
-      }
-    }
-
     return {
-      name: groupName,
-      label: config.label,
-      color: config.color,
-      colorRgb: config.colorRgb,
+      name: groupName, label: config.label, color: config.color, colorRgb: config.colorRgb,
       agents: groupAgents.length,
-      activeAgents: groupActiveAgents,
-      formulas: groupFormulas,
+      activeAgents: groupAgents.filter((a) => a.status === 'active').length,
+      formulas: [...new Set(groupAgents.map((a) => a.formula))].join(', '),
       description: config.description,
-      statusSummary,
+      statusSummary: computeGroupStatusSummary(groupAgents),
     }
   })
+}
 
-  // ── Agents list with taskCount ────────────────────────────────────────────
-  const agentsList = agents.map((agent) => ({
-    id: agent.id,
-    name: agent.name,
-    role: agent.role,
-    roleGroup: agent.roleGroup,
-    status: agent.status,
-    formula: agent.formula,
-    skills: agent.skills,
-    description: agent.description,
-    taskCount: agent.tasks.length,
-  }))
+function formatTimeAgo(dateStr: string): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  if (diffMins < 1) return 'just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  return `${Math.floor(diffHours / 24)}d ago`
+}
 
-  // ── Activity Events ───────────────────────────────────────────────────────
-  const activityEvents = tasks.slice(0, 20).map((task) => {
+function computeActivityEvents(tasks: any[]) {
+  return tasks.slice(0, 20).map((task) => {
     const agentName = task.agent?.name || 'Unknown'
     const agentGroup = task.agent?.roleGroup || ''
-    const statusLabel =
-      task.status === 'completed' ? 'completed' :
-      task.status === 'running' ? 'running' :
-      task.status === 'pending' ? 'pending' :
-      task.status === 'failed' ? 'failed' : task.status
-
-    const createdDate = new Date(task.createdAt)
-    const now = new Date()
-    const diffMs = now.getTime() - createdDate.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const time =
-      diffMins < 1 ? 'just now' :
-      diffMins < 60 ? `${diffMins}m ago` :
-      diffHours < 24 ? `${diffHours}h ago` :
-      `${Math.floor(diffHours / 24)}d ago`
-
-    return { time, agent: agentName, group: agentGroup, desc: `${task.title} — ${statusLabel}` }
+    const statusLabel = task.status
+    return { time: formatTimeAgo(task.createdAt), agent: agentName, group: agentGroup, desc: `${task.title} — ${statusLabel}` }
   })
+}
 
-  // ── Top Performers ────────────────────────────────────────────────────────
+function computeTopPerformers(agents: any[], tasks: any[]) {
   const completedTasksByAgent: Record<string, number> = {}
   for (const task of tasks) {
-    if (task.status === 'completed' && task.agentId) {
+    if (task.status === 'completed' && task.agentId)
       completedTasksByAgent[task.agentId] = (completedTasksByAgent[task.agentId] || 0) + 1
-    }
   }
-
-  const topPerformers = agents
+  return agents
     .map((agent) => ({
-      name: agent.name,
-      group: agent.roleGroup,
+      name: agent.name, group: agent.roleGroup,
       score: Math.min(80 + (completedTasksByAgent[agent.id] || 0) * 5, 100),
       completedTasks: completedTasksByAgent[agent.id] || 0,
     }))
     .sort((a, b) => b.score - a.score || b.completedTasks - a.completedTasks)
     .slice(0, 10)
+}
 
-  // ── Heatmap & Network Activity ────────────────────────────────────────────
-  const connectionHeatmap = computeConnectionHeatmap(agents, agentsByGroup)
-  const networkActivity = computeNetworkActivity(tasks, totalTasks)
+export async function computeStats(): Promise<StatsResult> {
+  const agents = await db.agent.findMany({
+    include: { tasks: true, parent: { select: { id: true, name: true, roleGroup: true } }, twin: { select: { id: true, name: true, roleGroup: true } }, children: { select: { id: true, name: true, roleGroup: true } } },
+  })
+  const tasks = await db.task.findMany({ include: { agent: { select: { id: true, name: true, roleGroup: true } } }, orderBy: { createdAt: 'desc' } })
+
+  const agentsByGroup: Record<string, typeof agents> = {}
+  for (const agent of agents) {
+    if (!agentsByGroup[agent.roleGroup]) agentsByGroup[agent.roleGroup] = []
+    agentsByGroup[agent.roleGroup].push(agent)
+  }
 
   return {
-    quickStats,
-    statusDistribution,
-    roleGroups,
-    agents: agentsList,
-    activityEvents,
-    topPerformers,
-    connectionHeatmap,
-    networkActivity,
+    quickStats: computeQuickStats(agents, tasks),
+    statusDistribution: computeStatusDistribution(agents),
+    roleGroups: computeRoleGroups(agents),
+    agents: agents.map((agent) => ({
+      id: agent.id, name: agent.name, role: agent.role, roleGroup: agent.roleGroup,
+      status: agent.status, formula: agent.formula, skills: agent.skills,
+      description: agent.description, taskCount: agent.tasks.length,
+    })),
+    activityEvents: computeActivityEvents(tasks),
+    topPerformers: computeTopPerformers(agents, tasks),
+    connectionHeatmap: computeConnectionHeatmap(agents, agentsByGroup),
+    networkActivity: computeNetworkActivity(tasks, tasks.length),
   }
 }

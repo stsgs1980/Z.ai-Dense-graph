@@ -19,13 +19,22 @@ export function useDashboardWs(onDataChange: () => void) {
     })
     socketRef.current = socket
 
-    socket.on('connect', () => { console.log('[ws:dashboard] connected'); setWsConnected(true) })
-    socket.on('disconnect', () => { console.log('[ws:dashboard] disconnected'); setWsConnected(false) })
+    socket.on('connect', () => {
+      console.log('[ws:dashboard] connected')
+      setWsConnected(true)
+    })
+    socket.on('disconnect', () => {
+      console.log('[ws:dashboard] disconnected')
+      setWsConnected(false)
+    })
 
     const events = ['agent:status', 'agent:created', 'agent:updated', 'agent:deleted', 'agents:snapshot']
     events.forEach(evt => socket.on(evt, () => onDataChange()))
 
-    return () => { socket.disconnect(); socketRef.current = null }
+    return () => {
+      socket.disconnect()
+      socketRef.current = null
+    }
   }, [onDataChange])
 
   return { wsConnected }

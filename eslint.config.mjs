@@ -107,6 +107,7 @@ const eslintConfig = [
       "no-undef": "off",
       "no-unreachable": "off",
       "no-useless-escape": "off",
+      "react/no-children-prop": "off",
     },
   },
 
@@ -116,6 +117,7 @@ const eslintConfig = [
     rules: {
       "max-lines": "off",
       "max-lines-per-function": "off",
+      "complexity": "off",
     },
   },
 

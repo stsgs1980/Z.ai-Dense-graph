@@ -4,7 +4,11 @@ import type { ExecutionData } from './prompt-analysis-types'
 import type { HistoryMeta } from './prompt-analysis-executor'
 
 function parseEval(data: string): Record<string, unknown> | null {
-  try { return JSON.parse(data) } catch { return null }
+  try {
+    return JSON.parse(data)
+  } catch {
+    return null
+  }
 }
 
 export async function savePromptHistory(

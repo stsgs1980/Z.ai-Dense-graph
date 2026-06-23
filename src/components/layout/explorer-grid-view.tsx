@@ -36,10 +36,16 @@ export function ExplorerGridView({ filtered, best, selectedRecipe, setSelectedRe
       {filtered.slice(0, selectedRecipe ? 12 : 20).map(r => {
         const isBest = r.structure === best?.structure
         const isSelected = r.structure === selectedRecipe
+        const handleKeyDown = (e: { key: string; preventDefault: () => void }) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setSelectedRecipe(isSelected ? null : r.structure)
+          }
+        }
         return (
           <div key={r.structure} onClick={() => setSelectedRecipe(isSelected ? null : r.structure)}
             role="button" tabIndex={0} aria-label={`${r.recipe.name}, score ${r.score}`}
-            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedRecipe(isSelected ? null : r.structure) } }}
+            onKeyDown={handleKeyDown}
             style={{ border: `1px solid ${isSelected ? tokens.cardSelected : isBest ? `${tokens.accentPrimary}40` : tokens.cardBorder}`, borderRadius: tokens.cornerRadius, overflow: 'hidden', background: tokens.bgBase, cursor: 'pointer', transition: 'all 0.2s', boxShadow: isSelected ? `0 4px 24px ${tokens.accentPrimary}20` : tokens.cardShadow, minHeight: 44 /* WCAG 2.5.5 */ }}>
             <div style={{ height: 220, background: tokens.bgDeep, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${tokens.borderSubtle}` }}>
               <div style={{ width: '82%', height: '82%' }}><GridPreview recipe={r.recipe} compact /></div>

@@ -25,77 +25,41 @@ interface GridPreviewProps {
   className?: string
 }
 
-export function GridPreview({ recipe, compact, showCode, className }: GridPreviewProps) {
-  const { tokens } = useProjectTheme()
-  const template = recipe.gridTemplate
+function extractSlots(template: any, regions: any[]): { slots: string[]; slotIndex: Map<string, number>; rowCount: number } {
   const areaNames = new Set<string>()
   if (template.areas)
-    for (const row of template.areas)
-      for (const name of row.split(/\s+/))
-        if (name && name !== '.') areaNames.add(name)
+    for (const row of template.areas) for (const name of row.split(/\s+/)) if (name && name !== '.') areaNames.add(name)
+  const slots = template.areas ? Array.from(areaNames) : regions.map(r => r.name)
+  return { slots, slotIndex: new Map(slots.map((n, i) => [n, i + 1])), rowCount: template.areas ? template.areas.length : (template.rows ? template.rows.split(/\s+/).length : 1) }
+}
 
-  const rowCount = template.areas
-    ? template.areas.length
-    : (template.rows ? template.rows.split(/\s+/).length : 1)
+function SlotCell({ name, idx, feat, compact, template, tokens }: { name: string; idx: number; feat: boolean; compact: boolean | undefined; template: any; tokens: any }) {
+  return (
+    <div key={name} style={{
+      gridArea: template.areas ? name : undefined,
+      backgroundColor: feat ? tokens.cellFeaturedBg : tokens.cellBg,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 2, padding: compact ? 3 : 8, borderRadius: compact ? 2 : tokens.radius.md, transition: 'all 0.3s',
+    }}>
+      <span style={{ fontFamily: tokens.fontFamilyMono, fontSize: compact ? 8 : 12, fontWeight: 700, color: tokens.accentPrimary, lineHeight: 1 }}>{idx}</span>
+      <span style={{ fontFamily: tokens.fontFamilyMono, fontSize: compact ? 5 : 8, fontWeight: 500, color: feat ? tokens.cellFeaturedText : tokens.cellText, textTransform: 'lowercase' as const, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{name}</span>
+    </div>
+  )
+}
 
-  const slots = template.areas ? Array.from(areaNames) : recipe.regions.map(r => r.name)
-  const slotIndex = new Map(slots.map((n, i) => [n, i + 1]))
-
+export function GridPreview({ recipe, compact, showCode, className }: GridPreviewProps) {
+  const { tokens } = useProjectTheme()
+  const { slots, slotIndex, rowCount } = extractSlots(recipe.gridTemplate, recipe.regions)
   const shouldShowCode = showCode !== false && !compact
-
+  const gridStyle = {
+    display: 'grid', gridTemplateColumns: recipe.gridTemplate.columns, gap: compact ? 2 : 3,
+    ...(compact ? { height: '100%', gridTemplateRows: `repeat(${rowCount}, 1fr)` } : { minHeight: 240, gridTemplateRows: recipe.gridTemplate.rows || undefined }),
+    gridTemplateAreas: recipe.gridTemplate.areas ? recipe.gridTemplate.areas.map(a => `"${a}"`).join(' ') : undefined,
+    borderRadius: compact ? radius.lg : radius['2xl'], overflow: 'hidden', transition: 'all 0.3s',
+  }
   return (
     <div className={className ?? ''} style={{ width: '100%', height: '100%' }}>
-      {/* Canvas Area */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: template.columns,
-        gap: compact ? 2 : 3,
-        ...(compact
-          ? { height: '100%', gridTemplateRows: `repeat(${rowCount}, 1fr)` }
-          : { minHeight: 240, gridTemplateRows: template.rows || undefined }
-        ),
-        gridTemplateAreas: template.areas ? template.areas.map(a => `"${a}"`).join(' ') : undefined,
-        borderRadius: compact ? radius.lg : radius['2xl'],
-        overflow: 'hidden',
-        transition: 'all 0.3s',
-      }}>
-        {slots.map(name => {
-          const idx = slotIndex.get(name) ?? 0
-          const feat = isFeatured(name)
-          return (
-            <div key={name}
-              style={{
-                gridArea: template.areas ? name : undefined,
-                backgroundColor: feat ? tokens.cellFeaturedBg : tokens.cellBg,
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                gap: 2, padding: compact ? 3 : 8,
-                borderRadius: compact ? 2 : radius.md,
-                transition: 'all 0.3s',
-              }}>
-              <span style={{
-                fontFamily: tokens.fontFamilyMono,
-                fontSize: compact ? 8 : 12,
-                fontWeight: 700,
-                color: tokens.accentPrimary,
-                lineHeight: 1,
-              }}>{idx}</span>
-              <span style={{
-                fontFamily: tokens.fontFamilyMono,
-                fontSize: compact ? 5 : 8,
-                fontWeight: 500,
-                color: feat ? tokens.cellFeaturedText : tokens.cellText,
-                textTransform: 'lowercase' as const,
-                lineHeight: 1,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                maxWidth: '100%',
-              }}>{name}</span>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Code Drawer */}
+      <div style={gridStyle}>{slots.map(name => <SlotCell key={name} name={name} idx={slotIndex.get(name) ?? 0} feat={isFeatured(name)} compact={compact} template={recipe.gridTemplate} tokens={tokens} />)}</div>
       {shouldShowCode && <GridCodeBlock recipe={recipe} />}
     </div>
   )

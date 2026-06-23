@@ -35,74 +35,58 @@ const CONTENT_KEYWORDS: Record<string, string[]> = {
 const SIDEBAR_KW = ['sidebar', 'сайдбар', 'боковая', 'nav', 'навигация', 'menu', 'меню', 'маршрутиз', 'routing', 'навигац', 'структур']
 const FOOTER_KW = ['footer', 'футер', 'подвал', 'bottom']
 
-// ─── Prompt Parser ───────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────
 
-export function parsePrompt(prompt: string): ParsedPrompt {
-  const lower = prompt.toLowerCase()
-  const detected: string[] = []
-
-  // Score ALL goals
-  const goalScores: Record<string, number> = {}
-  for (const [g, kws] of Object.entries(GOAL_KEYWORDS)) {
+function scoreKeywords(lower: string, keywordMap: Record<string, string[]>): Record<string, number> {
+  const scores: Record<string, number> = {}
+  for (const [key, kws] of Object.entries(keywordMap)) {
     let s = 0
     for (const kw of kws) if (lower.includes(kw)) s += kw.length
-    if (s > 0) goalScores[g] = s
+    if (s > 0) scores[key] = s
   }
+  return scores
+}
 
-  // Primary goal = highest score
-  let goal = 'landing', maxG = 0
-  for (const [g, s] of Object.entries(goalScores)) { if (s > maxG) { maxG = s; goal = g } }
-  if (maxG > 0) detected.push(`goal:${goal}`)
-
-  // Normalize weights
-  const totalScore = Object.values(goalScores).reduce((a, b) => a + b, 0)
-  const goalWeights: Record<string, number> = {}
-  if (totalScore > 0) {
-    for (const [g, s] of Object.entries(goalScores)) {
-      goalWeights[g] = s / totalScore
-      if (g !== goal && s > 0) detected.push(`goal:${g}`)
-    }
-  } else {
-    goalWeights[goal] = 1
+function topKey(scores: Record<string, number>): string {
+  let best = '', max = 0
+  for (const [k, s] of Object.entries(scores)) {
+    if (s > max) { max = s; best = k }
   }
+  return best
+}
 
-  const isMultiGoal = Object.keys(goalWeights).filter(g => goalWeights[g] > 0).length > 1
+function normalizeWeights(scores: Record<string, number>, primary: string): Record<string, number> {
+  const total = Object.values(scores).reduce((a, b) => a + b, 0)
+  if (total === 0) return { [primary]: 1 }
+  const weights: Record<string, number> = {}
+  for (const [k, s] of Object.entries(scores)) weights[k] = s / total
+  return weights
+}
 
-  // Content type
-  let contentType = 'cards', maxC = 0
-  for (const [ct, kws] of Object.entries(CONTENT_KEYWORDS)) {
-    let s = 0
-    for (const kw of kws) if (lower.includes(kw)) s += kw.length
-    if (s > maxC) { maxC = s; contentType = ct }
+function matchItemCount(lower: string): number | null {
+  const m = lower.match(/(\d+)\s*(items?|элемент|cards?|карточ|products?|товар|articles?|posts?|photo|фото|video|видео|contacts?)/)
+  return m ? Math.min(50, Math.max(1, parseInt(m[1], 10))) : null
+}
+
+function defaultItemCount(goal: string): number {
+  const defaults: Record<string, number> = {
+    ecommerce: 24, social: 24, analytics: 12, crm: 12, saas: 1,
+    application: 8, 'dashboard-app': 12, 'admin-panel': 10,
+    landing: 6, blog: 8, documentation: 6, portfolio: 6, media: 8,
   }
-  if (maxC > 0) detected.push(`content:${contentType}`)
-  if (isMultiGoal && maxC === 0) contentType = 'mixed'
+  return defaults[goal] ?? 6
+}
 
-  // Item count
-  let itemCount = 6
-  const numMatch = lower.match(/(\d+)\s*(items?|элемент|cards?|карточ|products?|товар|articles?|posts?|photo|фото|video|видео|contacts?)/)
-  if (numMatch) {
-    itemCount = Math.min(50, Math.max(1, parseInt(numMatch[1], 10)))
-    detected.push(`items:${itemCount}`)
-  } else {
-    const goalItemDefaults: Record<string, number> = {
-      ecommerce: 24, social: 24, analytics: 12, crm: 12, saas: 1,
-      application: 8, 'dashboard-app': 12, 'admin-panel': 10,
-      landing: 6, blog: 8, documentation: 6, portfolio: 6, media: 8,
-    }
-    if (isMultiGoal) {
-      let weightedSum = 0, totalW = 0
-      for (const [g, w] of Object.entries(goalWeights)) {
-        weightedSum += (goalItemDefaults[g] ?? 6) * w
-        totalW += w
-      }
-      itemCount = totalW > 0 ? Math.round(weightedSum / totalW) : 6
-    } else {
-      itemCount = goalItemDefaults[goal] ?? 6
-    }
+function weightedItemCount(weights: Record<string, number>): number {
+  let sum = 0, totalW = 0
+  for (const [g, w] of Object.entries(weights)) {
+    sum += defaultItemCount(g) * w
+    totalW += w
   }
+  return totalW > 0 ? Math.round(sum / totalW) : 6
+}
 
-  // Structural inference
+function resolveStructural(goal: string, isMultiGoal: boolean, weights: Record<string, number>, lower: string) {
   const SIDEBAR_GOALS = ['dashboard-app', 'admin-panel', 'crm', 'analytics', 'documentation', 'application']
   const FOOTER_GOALS = ['blog', 'ecommerce', 'documentation', 'landing']
   let needsSidebar = SIDEBAR_GOALS.includes(goal)
@@ -110,19 +94,56 @@ export function parsePrompt(prompt: string): ParsedPrompt {
   let needsFooter = FOOTER_GOALS.includes(goal)
 
   if (isMultiGoal) {
-    for (const [g, w] of Object.entries(goalWeights)) {
+    for (const [g, w] of Object.entries(weights)) {
       if (w > 0.15 && SIDEBAR_GOALS.includes(g)) needsSidebar = true
       if (w > 0.15 && FOOTER_GOALS.includes(g)) needsFooter = true
     }
   }
 
-  for (const kw of SIDEBAR_KW) if (lower.includes(kw)) { needsSidebar = true; detected.push('sidebar'); break }
-  for (const kw of FOOTER_KW) if (lower.includes(kw)) { needsFooter = true; detected.push('footer'); break }
+  if (SIDEBAR_KW.some(kw => lower.includes(kw))) needsSidebar = true
+  if (FOOTER_KW.some(kw => lower.includes(kw))) needsFooter = true
 
-  // Auth override
-  if (['login', 'signin', 'signup', 'register', 'auth'].some(kw => lower.includes(kw))) {
-    needsHeader = false; goal = 'saas'; contentType = 'forms'; itemCount = 1
-    detected.push('auth'); goalWeights['saas'] = 1
+  return { needsSidebar, needsHeader, needsFooter }
+}
+
+// ─── Prompt Parser ───────────────────────────────────────────
+
+export function parsePrompt(prompt: string): ParsedPrompt {
+  const lower = prompt.toLowerCase()
+  const detected: string[] = []
+
+  const goalScores = scoreKeywords(lower, GOAL_KEYWORDS)
+  let goal = topKey(goalScores) || 'landing'
+  if (Object.values(goalScores).some(s => s > 0)) detected.push(`goal:${goal}`)
+
+  const goalWeights = normalizeWeights(goalScores, goal)
+  if (goal !== goal) detected.push(`goal:${goal}`)
+  const isMultiGoal = Object.keys(goalWeights).filter(g => goalWeights[g] > 0).length > 1
+
+  const contentScores = scoreKeywords(lower, CONTENT_KEYWORDS)
+  let contentType = topKey(contentScores) || 'cards'
+  if (Object.values(contentScores).some(s => s > 0)) detected.push(`content:${contentType}`)
+  if (isMultiGoal && Object.values(contentScores).every(s => s === 0)) contentType = 'mixed'
+
+  const numItems = matchItemCount(lower)
+  let itemCount: number
+  if (numItems !== null) {
+    itemCount = numItems
+    detected.push(`items:${itemCount}`)
+  } else {
+    itemCount = isMultiGoal ? weightedItemCount(goalWeights) : defaultItemCount(goal)
+  }
+
+  const { needsSidebar, needsHeader, needsFooter } = resolveStructural(goal, isMultiGoal, goalWeights, lower)
+
+  const AUTH_KW = ['login', 'signin', 'signup', 'register', 'auth']
+  if (AUTH_KW.some(kw => lower.includes(kw))) {
+    needsHeader = false
+    goal = 'saas'
+    contentType = 'forms'
+    itemCount = 1
+    detected.push('auth')
+    goalWeights['saas'] = 1
   }
 
   return { goal, contentType, itemCount, needsSidebar, needsHeader, needsFooter, detected, goalWeights }

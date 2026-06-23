@@ -30,58 +30,68 @@ export function PromptHistory({ onSelect, collapsed, onToggleCollapse, onDataCha
 
   return (
     <div className="flex flex-col h-full" style={{ width: '280px', minWidth: '280px', background: '#0A0A0A', borderLeft: '1px solid rgba(51,51,51,0.3)' }}>
-      <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(51,51,51,0.3)' }}>
-        <div className="flex items-center gap-2">
-          <History size={14} style={{ color: '#06B6D4' }} />
-          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94A3B8' }}>History</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ background: 'rgba(6,182,212,0.1)', color: '#06B6D4' }}>{history.length}</span>
-          {history.length > 0 && <TrendingUp size={10} style={{ color: '#06B6D4' }} />}
-        </div>
-        <div className="flex items-center gap-1.5">
-          {history.length > 0 && (
-            <button onClick={clearAll} className="p-1.5 rounded transition-all hover:scale-110" style={{ color: '#64748B' }} title="Clear history">
-              <Trash2 size={12} />
-            </button>
-          )}
-          {onToggleCollapse && (
-            <button onClick={onToggleCollapse} className="p-1.5 rounded transition-all hover:scale-110" style={{ color: '#64748B' }}>
-              <ChevronRight size={12} />
-            </button>
-          )}
-        </div>
+      <HistoryHeader history={history} loading={loading} clearAll={clearAll} onToggleCollapse={onToggleCollapse} />
+      {history.length >= 2 && <ScoreTrendSection history={history} />}
+      <HistoryList history={history} loading={loading} onSelect={onSelect} />
+    </div>
+  )
+}
+
+function HistoryHeader({ history, clearAll, onToggleCollapse }: { history: any[]; clearAll: () => void; onToggleCollapse?: () => void }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(51,51,51,0.3)' }}>
+      <div className="flex items-center gap-2">
+        <History size={14} style={{ color: '#06B6D4' }} />
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#94A3B8' }}>History</span>
+        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono" style={{ background: 'rgba(6,182,212,0.1)', color: '#06B6D4' }}>{history.length}</span>
+        {history.length > 0 && <TrendingUp size={10} style={{ color: '#06B6D4' }} />}
       </div>
-
-      {/* Score Trend */}
-      {history.length >= 2 && (
-        <div className="px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(51,51,51,0.3)' }}>
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <TrendingUp size={10} style={{ color: '#06B6D4' }} />
-            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>Score Trend</span>
-          </div>
-          <ScoreTrend history={history} />
-        </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>
-        {loading ? (
-          <div className="px-4 py-6 text-center text-xs" style={{ color: '#475569' }}>Loading...</div>
-        ) : history.length === 0 ? (
-          <div className="px-4 py-6 text-center text-xs" style={{ color: '#475569' }}>No history yet. Execute a workflow to see results here.</div>
-        ) : (
-          <div className="p-2 space-y-1">
-            {history.map((entry) => (
-              <HistoryItem key={entry.id} entry={entry} onSelect={onSelect} />
-            ))}
-          </div>
+      <div className="flex items-center gap-1.5">
+        {history.length > 0 && (
+          <button onClick={clearAll} className="p-1.5 rounded transition-all hover:scale-110" style={{ color: '#64748B' }} title="Clear history">
+            <Trash2 size={12} />
+          </button>
+        )}
+        {onToggleCollapse && (
+          <button onClick={onToggleCollapse} className="p-1.5 rounded transition-all hover:scale-110" style={{ color: '#64748B' }}>
+            <ChevronRight size={12} />
+          </button>
         )}
       </div>
     </div>
   )
 }
 
+function ScoreTrendSection({ history }: { history: any[] }) {
+  return (
+    <div className="px-4 py-3 flex-shrink-0" style={{ borderBottom: '1px solid rgba(51,51,51,0.3)' }}>
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <TrendingUp size={10} style={{ color: '#06B6D4' }} />
+        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#64748B' }}>Score Trend</span>
+      </div>
+      <ScoreTrend history={history} />
+    </div>
+  )
+}
+
+function HistoryList({ history, loading, onSelect }: { history: PromptHistoryEntry[]; loading: boolean; onSelect: (prompt: string) => void }) {
+  let content: React.ReactNode
+  if (loading) {
+    content = <div className="px-4 py-6 text-center text-xs" style={{ color: '#475569' }}>Loading...</div>
+  } else if (history.length === 0) {
+    content = <div className="px-4 py-6 text-center text-xs" style={{ color: '#475569' }}>No history yet. Execute a workflow to see results here.</div>
+  } else {
+    content = (
+      <div className="p-2 space-y-1">
+        {history.map((entry) => <HistoryItem key={entry.id} entry={entry} onSelect={onSelect} />)}
+      </div>
+    )
+  }
+  return <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.08) transparent' }}>{content}</div>
+}
+
 function HistoryItem({ entry, onSelect }: { entry: PromptHistoryEntry; onSelect: (prompt: string) => void }) {
   const scoreColor = entry.avgScore >= 80 ? '#22C55E' : entry.avgScore >= 50 ? '#EAB308' : entry.avgScore > 0 ? '#EF4444' : '#475569'
-
   return (
     <button onClick={() => onSelect(entry.prompt)} className="w-full text-left p-3 rounded-lg transition-all hover:scale-[1.01]" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(51,51,51,0.2)' }}>
       <p className="text-xs text-white truncate mb-2">{entry.prompt}</p>

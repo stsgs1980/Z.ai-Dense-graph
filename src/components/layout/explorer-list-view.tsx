@@ -15,10 +15,16 @@ export function ExplorerListView({ filtered, best, selectedRecipe, setSelectedRe
       {filtered.map(r => {
         const isBest = r.structure === best?.structure
         const isSelected = r.structure === selectedRecipe
+        const handleKeyDown = (e: { key: string; preventDefault: () => void }) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            setSelectedRecipe(isSelected ? null : r.structure)
+          }
+        }
         return (
           <div key={r.structure} onClick={() => setSelectedRecipe(isSelected ? null : r.structure)}
             role="button" tabIndex={0} aria-label={`${r.recipe.name}, score ${r.score}`}
-            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedRecipe(isSelected ? null : r.structure) } }}
+            onKeyDown={handleKeyDown}
             style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '12px 20px', border: `1px solid ${isSelected ? tokens.cardSelected : isBest ? `${tokens.accentPrimary}30` : 'transparent'}`, borderRadius: tokens.cornerRadius, background: isSelected ? `${tokens.accentPrimary}08` : isBest ? `${tokens.accentPrimary}04` : 'transparent', cursor: 'pointer', transition: 'all 0.15s', minHeight: 44 /* WCAG 2.5.5 */ }}>
             <div style={{ width: 72, height: 52, borderRadius: 6, background: tokens.bgDeep, border: `1px solid ${tokens.borderSubtle}`, flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ width: '84%', height: '84%' }}><GridPreview recipe={r.recipe} compact /></div>

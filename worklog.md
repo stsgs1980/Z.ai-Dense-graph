@@ -2884,3 +2884,133 @@ Stage Summary:
 - 16 files changed, 1018 insertions, 2098 deletions (net -1080 lines)
 - Created: techniques-clarity.ts, techniques-advanced.ts, checks-1.ts, checks-2.ts
 - No behavioral changes — all refactoring is structural
+
+---
+
+### Task 5-b: Fix remaining max-statements-per-line warnings (hooks + API)
+
+**Files changed (8):**
+
+| File | Lines fixed |
+|---|---|
+| `src/hooks/prompt-history-saver.ts:7` | Split `try { return } catch { return }` into 4 lines |
+| `src/hooks/use-dashboard-data.ts:24-25` | Split `if (.ok) { const; set }` blocks into multi-line |
+| `src/hooks/use-dashboard-ws.ts:22,23,28` | Split `socket.on` callbacks and cleanup return |
+| `src/hooks/use-hierarchy-data.ts:45,46,71` | Split `socket.on` callbacks and cleanup return |
+| `src/hooks/use-hierarchy-state.ts:49,53,69,78` | Split `setFitMode`, `toggleEdgeType`, keyboard `if { stmt; return }` blocks |
+| `src/hooks/use-workflow-create.ts:44,45` | Split validation `if { toast; return }` blocks |
+| `src/hooks/use-workflow-data.ts:64` | Split `setRunningIds` callback into multi-line |
+| `src/app/api/agents/execution-stats/route.ts:66` | Split `try { parse } catch { continue }` into 4 lines |
+
+**Pattern:** Multi-statement single-liners (arrow functions, try/catch, if-blocks with early returns) split so each statement occupies its own line.
+
+**Verification:** `npx eslint src/hooks/ src/app/api/agents/execution-stats/route.ts` — 0 max-statements-per-line warnings.
+
+## Task 5-c: Fix max-statements-per-line in component files
+
+**Files changed (16):**
+
+| File | Line(s) | Change |
+|------|---------|--------|
+| `src/components/dashboard/dashboard-header.tsx` | 32 | Split 3-stmt `setTimeout` callback across 4 lines |
+| `src/components/dashboard/quick-actions-panel.tsx` | 30 | Split 2 style assignments in `onMouseEnter` to 2 lines |
+| `src/components/hierarchy/add-agent-modal.tsx` | 15-16 | Split 3-stmt `onSuccess` callback across 4 lines |
+| `src/components/hierarchy/detail-panel-collapsed.tsx` | 36,37 | Split 3 style assignments in `onMouseEnter`/`onMouseLeave` to 2 lines each |
+| `src/components/hierarchy/hierarchy-controls.tsx` | 55 | Split 3-stmt `onClick` across 2 lines |
+| `src/components/hierarchy/parts/connection-line.tsx` | 93 | Split `for` body stmts to 2 lines |
+| `src/components/layout/ai-canvas.tsx` | 64,73 | Split multi-if `onKeyDown` to 4 lines; split 4-stmt `onClick` to 3 lines |
+| `src/components/layout/explorer-grid-view.tsx` | 42 | Split `onKeyDown` if-body stmts to 2 lines |
+| `src/components/layout/explorer-list-view.tsx` | 21 | Split `onKeyDown` if-body stmts to 2 lines |
+| `src/components/layout/features/ai-canvas.tsx` | 21,50,53,55 | Split `useEffect` keydown handler, `onKeyDown`, and `onClick` across multiple lines |
+| `src/components/layout/theme-dropdown.tsx` | 24 | Split 2-stmt `handleSelect` to 2 lines |
+| `src/components/prompt-studio/prompt-studio.tsx` | 46 | Split if-block stmts to 2 lines |
+| `src/components/workflows/workflow-pipeline.tsx` | 19,20,54 | Split `onRun`/`onViewHistory` to multi-line; split 3-stmt clear-filters `onClick` |
+| `src/components/workflows/workflow-types.ts` | 105 | Expanded single-line `try/catch` to 5 lines |
+| `src/lib/layout/score-layout.ts` | 67,68 | Split if-body stmts to 2 lines each |
+
+**Pattern:** Inline arrow-function handlers and dense single-liners split so no line has more than 2 AST statement nodes.
+
+**Verification:** `npx eslint src/components/ src/lib/layout/ --rule ...` — **0** max-statements-per-line warnings.
+
+---
+
+## Task 5-d: Decompose large API route files (max-lines-per-function: 50, complexity: 15)
+
+**Date:** 2025-01-17
+
+**Objective:** Fix all ESLint `max-lines-per-function` and `complexity` warnings in `src/app/api/` by extracting logic into `src/lib/` files.
+
+**Files created (lib extraction):**
+- `src/lib/prompting-api-handlers.ts` — 12 section handler functions + dispatch map for `/api/prompting`
+- `src/lib/seed-data.ts` — `sampleAgents`, `sampleTasks`, `setupHierarchy()`, `seedDatabase()`
+- `src/lib/workflow-execution.ts` — shared types, `loadWorkflow()`, `resolveAgentsForSteps()`, `createExecutionRecords()`, `finalizeExecution()`, step/message helpers, `simulateStepExecution()` (split into per-action handlers), `buildStepUserPrompt()`, `WorkflowError`
+- `src/lib/workflow-pipeline.ts` — `runSimulatedPipeline()` and `runLLMPipeline()` (the main execution loops)
+- `src/lib/hierarchy-builder.ts` — `buildAgentTree()`, `groupByRoleGroup()`, `computeAgentStats()`, `buildAllConnections()` (split into `addCommandEdges`, `addTwinEdges`, `addDelegateEdges`, `addSuperviseEdges`, `addBroadcastEdges`)
+- `src/lib/agent-helpers.ts` — shared `FORMULA_ID_MAP`, `resolvePromptingMeta()`, `resolveFormulaMeta()`, `resolveSystemPrompt()`, `resolveAgentData()`, `buildAgentPromptContext()`, `resolveCognitiveFormulaId()`, `buildFormulaTemplate()`, `parseScore()`, `formatStepExecution()`, `computeExecutionStats()`, `aggregateAgentStats()`
+- `src/lib/interpret-prompt-helpers.ts` — `getInterpretZAI()`, `callInterpretLLM()` (resilient LLM call)
+
+**Files modified (12 route handlers):**
+1. `src/app/api/prompting/route.ts` — 206→15 lines (delegated to `prompting-api-handlers.ts`)
+2. `src/app/api/seed/route.ts` — 183→13 lines (delegated to `seed-data.ts`)
+3. `src/app/api/workflows/execute/route.ts` — 315→28 lines (delegated to `workflow-execution.ts` + `workflow-pipeline.ts`)
+4. `src/app/api/workflows/execute-llm/route.ts` — 182→41 lines (delegated to `workflow-execution.ts` + `workflow-pipeline.ts`)
+5. `src/app/api/hierarchy/route.ts` — 185→21 lines (delegated to `hierarchy-builder.ts`)
+6. `src/app/api/agents/route.ts` — 125→37 lines (delegated to `agent-helpers.ts`)
+7. `src/app/api/agents/prompt/route.ts` — 128→41 lines (delegated to `agent-helpers.ts`)
+8. `src/app/api/agents/[id]/executions/route.ts` — 99→33 lines (delegated to `agent-helpers.ts`)
+9. `src/app/api/agents/execution-stats/route.ts` — 92→17 lines (delegated to `agent-helpers.ts`)
+10. `src/app/api/interpret-prompt/route.ts` — 115→37 lines (delegated to `interpret-prompt-helpers.ts`)
+11. `src/app/api/interpret-prompt/prompts.ts` — 151→90 lines (extracted `validateGoalWeights()`)
+12. `src/app/api/workflows/route.ts` — 134→72 lines (extracted `formatWorkflowResponse()`)
+
+**Additional fixes (pre-existing syntax errors blocking build):**
+- `src/components/dashboard/system-health-card.tsx` — missing closing brace in useEffect cleanup
+- `src/components/hierarchy/agent-hierarchy-v2.tsx` — missing `for` loop closing brace
+
+**Verification:**
+- `npx next build` — **0 errors**
+- `npx eslint src/app/api/` — **0 warnings**
+
+---
+
+### Task 6-c: Fix remaining `max-statements-per-line` warnings in layout files
+
+**Files fixed (12 warnings → 0):**
+
+**JSX inline handlers — extracted to named functions:**
+- `src/components/layout/ai-canvas.tsx` (lines 64, 73) — extracted `handleInputKeyDown` and `handleSuggestionClick` above the return statement
+- `src/components/layout/explorer-grid-view.tsx` (line 42) — extracted `handleKeyDown` inside `.map()` callback
+- `src/components/layout/explorer-list-view.tsx` (line 21) — extracted `handleKeyDown` inside `.map()` callback
+
+**Multi-statement .ts lines — split each statement to its own line:**
+- `src/lib/layout/parse-prompt.ts` (lines 58, 80, 123, 124) — expanded `for`/`if` one-liners to multi-line blocks
+- `src/lib/layout/prompt-parser.ts` (lines 54, 76, 119, 120) — same pattern as parse-prompt.ts
+
+**Verification:**
+- `npx eslint` on all 7 target files — **0 errors, 0 warnings**
+## Task 7-b: Decompose hook files to fix ESLint max-lines-per-function warnings
+
+**Date**: 2025-07-01
+
+### Summary
+Fixed 3 ESLint `max-lines-per-function` warnings across 2 hook files by extracting logic into standalone helper functions.
+
+### Changes
+
+**src/hooks/use-execution-stats.ts** (2 warnings resolved)
+- Extracted `EMPTY_STATS` constant to avoid inline object literal repetition
+- Extracted `handleExecuting()` — handles the `agent:executing` socket event
+- Extracted `handleStepCompleted()` — handles the `agent:step-completed` socket event with incremental avgScore calculation
+- Extracted `handleStepFailed()` — handles the `agent:step-failed` socket event
+- Hook body reduced from 81→29 lines; useEffect callback from 61→8 lines
+
+**src/hooks/use-workflow-create.ts** (1 warning resolved)
+- Extracted `SaveWorkflowParams` interface for form data
+- Extracted `saveWorkflow(params, callbacks)` async function handling validation, API call, and toast notifications
+- Hook body reduced from 63→19 lines
+- Removed unused `ACTION_OPTIONS` import
+
+### Verification
+- `npx eslint src/hooks/` — 0 warnings, 0 errors
+- `npx next build` — success (no errors)
+

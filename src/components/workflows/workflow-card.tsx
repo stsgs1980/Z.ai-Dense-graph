@@ -11,6 +11,52 @@ function TriggerIconDisplay({ type }: { type: string }) {
   return <Icon size={10} style={{ color: '#0891B2' }} />
 }
 
+function CardActions({ workflow, running, onRun, onToggle, onDelete }: { workflow: WorkflowData; running: boolean; onRun: () => void; onToggle: () => void; onDelete: () => void }) {
+  return (
+    <div className="flex items-center gap-1 flex-shrink-0">
+      <button onClick={(e) => { e.stopPropagation(); onDelete() }}
+        className="w-7 h-7 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-110"
+        style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }} title="Delete workflow">
+        <Trash2 size={10} style={{ color: '#EF4444' }} />
+      </button>
+      <button onClick={(e) => { e.stopPropagation(); onRun() }} disabled={running || workflow.status === 'draft'}
+        className="w-7 h-7 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed"
+        style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.25)' }} title="Run workflow">
+        {running ? <Loader2 size={11} className="animate-spin" style={{ color: '#06B6D4' }} /> : <Play size={11} style={{ color: '#06B6D4' }} />}
+      </button>
+      <button onClick={(e) => { e.stopPropagation(); onToggle() }}
+        className="w-7 h-7 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-110"
+        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(51,51,51,0.4)' }} title="View pipeline">
+        <Eye size={11} style={{ color: onToggle ? '#06B6D4' : '#64748B' }} />
+      </button>
+    </div>
+  )
+}
+
+function CardStats({ workflow }: { workflow: WorkflowData }) {
+  const rateColor = successRateColor(workflow.stats.successRate)
+  return (
+    <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-1.5">
+        <TriggerIconDisplay type={workflow.triggerType} />
+        <span className="text-[9px] capitalize" style={{ color: '#0891B2' }}>{workflow.triggerType}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Workflow size={10} style={{ color: '#64748B' }} />
+        <span className="text-[9px]" style={{ color: '#64748B' }}>{workflow.stepCount} steps</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Gauge size={10} style={{ color: rateColor }} />
+        <span className="text-[9px] font-bold" style={{ color: rateColor }}>{workflow.stats.successRate}%</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <Settings2 size={10} style={{ color: '#475569' }} />
+        <span className="text-[9px]" style={{ color: '#475569' }}>{workflow.stats.totalExecutions} runs</span>
+      </div>
+    </div>
+  )
+}
+
 export function WorkflowCard({
   workflow, isExpanded, onToggle, onRun, onViewHistory, onDelete, running,
 }: {
@@ -23,7 +69,6 @@ export function WorkflowCard({
   running: boolean
 }) {
   const statusStyle = WORKFLOW_STATUS_STYLES[workflow.status] || WORKFLOW_STATUS_STYLES.draft
-  const rateColor = successRateColor(workflow.stats.successRate)
 
   return (
     <div className="rounded-xl overflow-hidden transition-all duration-300"
@@ -42,47 +87,10 @@ export function WorkflowCard({
             </div>
             <p className="text-[10px] leading-relaxed" style={{ color: '#64748B' }}>{workflow.description}</p>
           </div>
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button onClick={(e) => { e.stopPropagation(); onDelete() }}
-              className="w-7 h-7 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-110"
-              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }} title="Delete workflow">
-              <Trash2 size={10} style={{ color: '#EF4444' }} />
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); onRun() }} disabled={running || workflow.status === 'draft'}
-              className="w-7 h-7 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.25)' }} title="Run workflow">
-              {running ? <Loader2 size={11} className="animate-spin" style={{ color: '#06B6D4' }} />
-                : <Play size={11} style={{ color: '#06B6D4' }} />}
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); onToggle() }}
-              className="w-7 h-7 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-110"
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(51,51,51,0.4)' }} title="View pipeline">
-              {isExpanded ? <Eye size={11} style={{ color: '#06B6D4' }} /> : <Eye size={11} style={{ color: '#64748B' }} />}
-            </button>
-          </div>
+          <CardActions workflow={workflow} running={running} onRun={onRun} onToggle={onToggle} onDelete={onDelete} />
         </div>
-
-        <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center gap-1.5">
-            <TriggerIconDisplay type={workflow.triggerType} />
-            <span className="text-[9px] capitalize" style={{ color: '#0891B2' }}>{workflow.triggerType}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Workflow size={10} style={{ color: '#64748B' }} />
-            <span className="text-[9px]" style={{ color: '#64748B' }}>{workflow.stepCount} steps</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Gauge size={10} style={{ color: rateColor }} />
-            <span className="text-[9px] font-bold" style={{ color: rateColor }}>{workflow.stats.successRate}%</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Settings2 size={10} style={{ color: '#475569' }} />
-            <span className="text-[9px]" style={{ color: '#475569' }}>{workflow.stats.totalExecutions} runs</span>
-          </div>
-        </div>
-
+        <CardStats workflow={workflow} />
         <MiniPipeline steps={workflow.steps} />
-
         {workflow.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
             {workflow.tags.map((tag) => (
@@ -91,7 +99,6 @@ export function WorkflowCard({
             ))}
           </div>
         )}
-
         {isExpanded && (
           <div className="mt-4 pt-3" style={{ borderTop: '1px solid rgba(51,51,51,0.3)' }}>
             <h4 className="text-white font-semibold text-[10px] mb-2 flex items-center gap-1.5">
@@ -101,7 +108,6 @@ export function WorkflowCard({
           </div>
         )}
       </div>
-
       {isExpanded && <ExpandedPipelineView workflow={workflow} onRun={onRun} running={running} />}
     </div>
   )

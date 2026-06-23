@@ -1,43 +1,80 @@
 import { Hand, Zap, Calendar, Radio, Cpu, Shield, RefreshCw, GitBranch, Sparkles } from 'lucide-react'
 
 export interface WorkflowStep {
-  id: string; order: number; name: string; agentId: string | null; roleGroup: string | null
+    id: string
+    order: number
+    name: string
+    agentId: string | null
+    roleGroup: string | null
   action: 'process' | 'review' | 'transform' | 'delegate' | 'broadcast' | 'decision'
-  inputSchema: Record<string, any>; outputSchema: Record<string, any>; condition: Record<string, any>
-  fallbackStepId: string | null; timeout: number; retryPolicy: Record<string, any>; config: Record<string, any>
+    inputSchema: Record<string, any>
+    outputSchema: Record<string, any>
+    condition: Record<string, any>
+    fallbackStepId: string | null
+    timeout: number
+    retryPolicy: Record<string, any>
+    config: Record<string, any>
 }
 
 export interface WorkflowStats {
-  totalExecutions: number; completedExecutions: number; runningExecutions: number; failedExecutions: number; successRate: number
+    totalExecutions: number
+    completedExecutions: number
+    runningExecutions: number
+    failedExecutions: number
+    successRate: number
 }
 
 export interface RecentExecution { id: string; status: string; startedAt: string | null; completedAt: string | null }
 
 export interface WorkflowData {
-  id: string; name: string; description: string
+    id: string
+    name: string
+    description: string
   status: 'draft' | 'active' | 'paused' | 'archived'
   triggerType: 'manual' | 'event' | 'schedule' | 'webhook' | 'agent'
-  triggerConfig: Record<string, any>; version: number; tags: string[]
-  stepCount: number; steps: WorkflowStep[]; stats: WorkflowStats; recentExecutions: RecentExecution[]
+    triggerConfig: Record<string, any>
+    version: number
+    tags: string[]
+    stepCount: number
+    steps: WorkflowStep[]
+    stats: WorkflowStats
+    recentExecutions: RecentExecution[]
 }
 
 export interface StepExecution {
-  id: string; stepId: string; agentId: string | null
+    id: string
+    stepId: string
+    agentId: string | null
   status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'waiting_feedback'
-  inputData: string; outputData: string; error: string | null
-  startedAt: string | null; completedAt: string | null; messages: AgentMessage[]
+    inputData: string
+    outputData: string
+    error: string | null
+    startedAt: string | null
+    completedAt: string | null
+    messages: AgentMessage[]
 }
 
 export interface AgentMessage {
-  id: string; fromAgentId: string; toAgentId: string
+    id: string
+    fromAgentId: string
+    toAgentId: string
   type: 'request' | 'response' | 'feedback' | 'error' | 'status' | 'context_update'
-  content: string; metadata: string; timestamp: string
+    content: string
+    metadata: string
+    timestamp: string
 }
 
 export interface ExecutionData {
-  id: string; workflowId: string; status: string; taskContext: string
-  input: string; output: string; error: string | null
-  startedAt: string | null; completedAt: string | null; steps: StepExecution[]
+    id: string
+    workflowId: string
+    status: string
+    taskContext: string
+    input: string
+    output: string
+    error: string | null
+    startedAt: string | null
+    completedAt: string | null
+    steps: StepExecution[]
 }
 
 export interface WorkflowPipelineProps { fullPage?: boolean; onBack?: () => void; onOpenHierarchy?: () => void }
@@ -65,7 +102,11 @@ export const WORKFLOW_STATUS_STYLES: Record<string, { bg: string; text: string; 
 
 export function safeJsonParse(str: string | null | undefined, fallback: any = {}): any {
   if (!str) return fallback
-  try { return JSON.parse(str) } catch { return fallback }
+  try {
+    return JSON.parse(str)
+  } catch {
+    return fallback
+  }
 }
 
 export function formatDuration(start: string | null, end: string | null): string {

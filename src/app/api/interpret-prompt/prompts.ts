@@ -1,7 +1,3 @@
-/**
- * System prompts and response validator for interpret-prompt API.
- * Extracted from route.ts per STD-FE-001 (200-line limit).
- */
 import { matchIntent, getInstructionContent, scorePrompt } from '@/lib/prompting'
 
 export const BASE_SYSTEM_PROMPT = `You are a layout advisor AI for @stsgs/ui component library. Parse the user's natural language description and extract structured layout context.
@@ -58,12 +54,42 @@ const VALID_GOALS = [
 ]
 const VALID_CONTENT_TYPES = ['cards', 'text', 'data', 'media', 'forms', 'mixed']
 
+// ─── Validation helpers ───────────────────────────────────────────────────
+
+function extractJsonString(raw: string): string {
+  const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
+  return jsonMatch ? jsonMatch[1].trim() : raw
+}
+
+function validateGoalWeights(weights: unknown, defaultGoal: string): Record<string, number> {
+  if (!weights || typeof weights !== 'object' || Array.isArray(weights)) {
+    return { [defaultGoal]: 1.0 }
+  }
+
+  const cleaned: Record<string, number> = {}
+  for (const [k, v] of Object.entries(weights as Record<string, unknown>)) {
+    if (VALID_GOALS.includes(k) && typeof v === 'number' && v > 0) {
+      cleaned[k] = v
+    }
+  }
+  if (Object.keys(cleaned).length === 0) cleaned[defaultGoal] = 1.0
+
+  const sum = Object.values(cleaned).reduce((a, b) => a + b, 0)
+  if (sum > 0 && Math.abs(sum - 1.0) > 0.05) {
+    for (const k of Object.keys(cleaned)) {
+      cleaned[k] = Math.round((cleaned[k] / sum) * 100) / 100
+    }
+  }
+  return cleaned
+}
+
+// ─── Public functions ────────────────────────────────────────────────────
+
 /** Build enhanced system prompt with intent context + instructions from @stsgs/prompting */
 export function buildEnhancedSystemPrompt(userPrompt: string): string {
   const intent = matchIntent(userPrompt)
   let systemPrompt = BASE_SYSTEM_PROMPT
 
-  // Inject detected intent context (using actual IntentMatch fields)
   if (intent && intent.confidence > 0) {
     systemPrompt += `\n\nDETECTED INTENT: "${intent.intent}" (confidence: ${intent.confidence}%)`
     if (intent.keywords.length > 0) {
@@ -75,15 +101,10 @@ export function buildEnhancedSystemPrompt(userPrompt: string): string {
     systemPrompt += `\nIntent template: ${intent.template}`
   }
 
-  // Inject behavioral instructions for better LLM behavior
   const diagnosticRule = getInstructionContent('diagnostic-disclosure')
   if (diagnosticRule) {
     systemPrompt += '\n\n## Behavioral Rule\n' +
-      diagnosticRule
-        .split('\n')
-        .filter(line => line.trim() && !line.startsWith('#'))
-        .slice(0, 5) // Take first 5 substantive lines
-        .join('\n')
+      diagnosticRule.split('\n').filter(line => line.trim() && !line.startsWith('#')).slice(0, 5).join('\n')
   }
 
   return systemPrompt
@@ -105,12 +126,7 @@ export function evaluatePromptQuality(prompt: string): {
 
 /** Parse and validate LLM response into structured layout context */
 export function parseAndValidate(raw: string) {
-  let jsonStr = raw
-  const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/)
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1].trim()
-  }
-
+  const jsonStr = extractJsonString(raw)
   const parsed = JSON.parse(jsonStr)
 
   if (!VALID_GOALS.includes(parsed.goal)) parsed.goal = 'landing'
@@ -120,32 +136,7 @@ export function parseAndValidate(raw: string) {
   parsed.needsHeader = Boolean(parsed.needsHeader)
   parsed.needsFooter = Boolean(parsed.needsFooter)
   parsed.confidence = Math.max(0, Math.min(100, Number(parsed.confidence) || 50))
-
-  // Validate / normalize goalWeights
-  if (
-    !parsed.goalWeights ||
-    typeof parsed.goalWeights !== 'object' ||
-    Array.isArray(parsed.goalWeights)
-  ) {
-    parsed.goalWeights = { [parsed.goal]: 1.0 }
-  } else {
-    const cleaned: Record<string, number> = {}
-    for (const [k, v] of Object.entries(parsed.goalWeights)) {
-      if (VALID_GOALS.includes(k) && typeof v === 'number' && v > 0) {
-        cleaned[k] = v
-      }
-    }
-    if (Object.keys(cleaned).length === 0) {
-      cleaned[parsed.goal] = 1.0
-    }
-    const sum = Object.values(cleaned).reduce((a, b) => a + b, 0)
-    if (sum > 0 && Math.abs(sum - 1.0) > 0.05) {
-      for (const k of Object.keys(cleaned)) {
-        cleaned[k] = Math.round((cleaned[k] / sum) * 100) / 100
-      }
-    }
-    parsed.goalWeights = cleaned
-  }
+  parsed.goalWeights = validateGoalWeights(parsed.goalWeights, parsed.goal)
 
   return parsed
 }

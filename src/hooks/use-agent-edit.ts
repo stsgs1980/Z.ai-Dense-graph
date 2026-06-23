@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
-import { fetchWithRetry } from '@/lib/client-fetch'
-import { emitAgentDeleted, emitAgentUpdated } from '@/lib/ws-client'
+import { handleAgentSave, handleAgentDelete } from './use-agent-edit-helpers'
 
 export interface EditForm {
   name: string; role: string; roleGroup: string; status: string;
@@ -36,38 +35,17 @@ export function useAgentEdit(statsData: any, onRefresh: () => void) {
   }, [statsData])
 
   const handleEditSave = useCallback(async () => {
-    if (!editingAgent?.id) return
     setEditSaving(true)
-    try {
-      const res = await fetchWithRetry(`/api/agents/${editingAgent.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(editForm),
-      })
-      if (res.ok) {
-        const updated = await res.json()
-        emitAgentUpdated(updated)
-        toast.success(`Agent "${editForm.name}" updated`)
-        setEditingAgent(null)
-        onRefresh()
-      } else {
-        toast.error('Failed to update agent')
-      }
-    } catch { toast.error('Failed to update agent') } finally { setEditSaving(false) }
+    try { await handleAgentSave(editingAgent, editForm, onRefresh); setEditingAgent(null) }
+    catch { toast.error('Failed to update agent') }
+    finally { setEditSaving(false) }
   }, [editingAgent, editForm, onRefresh])
 
   const handleEditDelete = useCallback(async () => {
-    if (!editingAgent?.id) return
     setEditDeleting(true)
-    try {
-      const res = await fetchWithRetry(`/api/agents/${editingAgent.id}`, { method: 'DELETE' })
-      if (res.ok) {
-        emitAgentDeleted(editingAgent.id)
-        toast.success(`Agent "${editingAgent.name}" deleted`)
-        setEditingAgent(null)
-        onRefresh()
-      } else {
-        toast.error('Failed to delete agent')
-      }
-    } catch { toast.error('Failed to delete agent') } finally { setEditDeleting(false) }
+    try { await handleAgentDelete(editingAgent, onRefresh); setEditingAgent(null) }
+    catch { toast.error('Failed to delete agent') }
+    finally { setEditDeleting(false) }
   }, [editingAgent, onRefresh])
 
   return {

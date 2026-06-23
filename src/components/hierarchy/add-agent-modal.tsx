@@ -12,7 +12,12 @@ const DEFAULT_FORM = { name: '', role: '', group: 'Execution', formula: 'ReAct',
 export function AddAgentModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState(DEFAULT_FORM)
   const update = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }))
-  const { createAgent, creating } = useAgentMutations({ onSuccess: () => { setForm(DEFAULT_FORM); onClose(); onCreated() } })
+  const { createAgent, creating } = useAgentMutations({
+    onSuccess: () => {
+      setForm(DEFAULT_FORM); onClose()
+      onCreated()
+    }
+  })
 
   const handleSubmit = useCallback(async () => {
     if (!form.name.trim()) return
