@@ -1,5 +1,1 @@
-# Posthog Inspired Design System
-
-Design system details have been moved to: https://getdesign.md/posthog/design-md
-
-You can also view previews, dark mode examples, and download options on getdesign.md.
+# Posthog Inspired Design SystemDesign system details have been moved to: https://getdesign.md/posthog/design-mdYou can also view previews, dark mode examples, and download options on getdesign.md.

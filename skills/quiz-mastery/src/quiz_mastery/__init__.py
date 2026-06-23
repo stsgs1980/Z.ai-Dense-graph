@@ -1,3 +1,1 @@
-from .service import QuizMasteryService
-
-__all__ = ["QuizMasteryService"]
+from .service import QuizMasteryService__all__ = ["QuizMasteryService"]

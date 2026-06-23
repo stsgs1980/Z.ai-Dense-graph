@@ -1,5 +1,1 @@
-# Framer Inspired Design System
-
-Design system details have been moved to: https://getdesign.md/framer/design-md
-
-You can also view previews, dark mode examples, and download options on getdesign.md.
+# Framer Inspired Design SystemDesign system details have been moved to: https://getdesign.md/framer/design-mdYou can also view previews, dark mode examples, and download options on getdesign.md.
