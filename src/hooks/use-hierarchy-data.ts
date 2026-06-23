@@ -47,19 +47,26 @@ export function useHierarchyData(reactFlowInstanceRef: MutableRefObject<any>) {
     socket.on('agents:snapshot', (data: { agents: AgentData[] }) => {
       if (data.agents && data.agents.length > 0) setAgents(data.agents)
     })
-    socket.on('agent:status', (data: { agentId: string; newStatus: string }) => {
+
+    const handleStatus = (data: { agentId: string; newStatus: string }) => {
       setAgents(prev => prev.map(a => a.id === data.agentId ? { ...a, status: data.newStatus } : a))
-    })
+    }
+    socket.on('agent:status', handleStatus)
+
     socket.on('agent:created', () => {
       // Re-fetch from API instead of double-updating state
       fetchAgents()
     })
-    socket.on('agent:updated', (data: { agent: AgentData }) => {
+
+    const handleUpdated = (data: { agent: AgentData }) => {
       setAgents(prev => prev.map(a => a.id === data.agent.id ? { ...a, ...data.agent } : a))
-    })
-    socket.on('agent:deleted', (data: { agentId: string }) => {
+    }
+    socket.on('agent:updated', handleUpdated)
+
+    const handleDeleted = (data: { agentId: string }) => {
       setAgents(prev => prev.filter(a => a.id !== data.agentId))
-    })
+    }
+    socket.on('agent:deleted', handleDeleted)
 
     return () => { socket.disconnect(); socketRef.current = null }
   }, [])

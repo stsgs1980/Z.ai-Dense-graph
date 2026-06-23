@@ -10,10 +10,11 @@ export function TopPerformersCard({ topPerformers: topPerformersProp, roleGroups
   const [barWidths, setBarWidths] = useState<number[]>(topPerformers.map(() => 0))
 
   useEffect(() => {
+    const makeUpdater = (index: number, score: number) => (prev: number[]) => {
+      const next = [...prev]; next[index] = score; return next
+    }
     const timers = topPerformers.map((_, i) =>
-      setTimeout(() => {
-        setBarWidths(prev => { const next = [...prev]; next[i] = topPerformers[i].score; return next })
-      }, 100 + i * 80)
+      setTimeout(() => setBarWidths(makeUpdater(i, topPerformers[i].score)), 100 + i * 80)
     )
     return () => timers.forEach(clearTimeout)
   }, [topPerformers])

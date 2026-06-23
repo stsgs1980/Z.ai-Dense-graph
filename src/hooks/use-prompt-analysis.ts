@@ -20,6 +20,21 @@ async function safeJson<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>
 }
 
+function applyLlmStepOverrides(
+  llmAnalysis: { suggestedSteps?: unknown; suggestedActions?: unknown },
+  pipelineSteps: Array<{ name: string; action?: string }>,
+) {
+  if (!llmAnalysis?.suggestedSteps || !Array.isArray(llmAnalysis.suggestedSteps)) return
+  const llmSteps = llmAnalysis.suggestedSteps as string[]
+  const llmActions = (llmAnalysis.suggestedActions as string[]) || []
+  for (let i = 0; i < llmSteps.length; i++) {
+    if (i < pipelineSteps.length) {
+      pipelineSteps[i].name = llmSteps[i]
+      if (llmActions[i]) pipelineSteps[i].action = llmActions[i]
+    }
+  }
+}
+
 export function usePromptAnalysis() {
   const [prompt, setPrompt] = useState('')
   const [analysis, setAnalysis] = useState<PromptAnalysis | null>(null)
@@ -75,16 +90,7 @@ export function usePromptAnalysis() {
       )
 
       // Override with LLM-suggested steps/actions if available
-      if (llmData.llmAnalysis?.suggestedSteps?.length > 0) {
-        const llmSteps = llmData.llmAnalysis.suggestedSteps as string[]
-        const llmActions = (llmData.llmAnalysis.suggestedActions as string[]) || []
-        for (let i = 0; i < llmSteps.length; i++) {
-          if (i < pipelineSteps.length) {
-            pipelineSteps[i].name = llmSteps[i]
-            if (llmActions[i]) pipelineSteps[i].action = llmActions[i]
-          }
-        }
-      }
+      applyLlmStepOverrides(llmData.llmAnalysis || {}, pipelineSteps)
 
       setAnalysis({
         intent,

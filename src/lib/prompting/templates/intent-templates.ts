@@ -172,6 +172,33 @@ const INTENTS: IntentDefinition[] = [
 
 // ─── Public API ──────────────────────────────────────────────
 
+function scoreKeywords(
+  keywords: Array<{ en: string[]; ru?: string[] }>,
+  lower: string,
+): { score: number; matched: string[] } {
+  let score = 0
+  const matched: string[] = []
+
+  for (const kwGroup of keywords) {
+    for (const kw of kwGroup.en) {
+      if (lower.includes(kw.toLowerCase())) {
+        score += kw.split(' ').length
+        matched.push(kw)
+      }
+    }
+    if (kwGroup.ru) {
+      for (const kw of kwGroup.ru) {
+        if (lower.includes(kw.toLowerCase())) {
+          score += kw.split(' ').length
+          matched.push(kw)
+        }
+      }
+    }
+  }
+
+  return { score, matched }
+}
+
 /**
  * Analyze a user prompt and detect the most likely intent.
  * Returns the best IntentMatch with confidence score and matched keywords.
@@ -193,27 +220,8 @@ export function matchIntent(prompt: string): IntentMatch {
   const scores: Array<{ intent: IntentDefinition; score: number; matched: string[] }> = []
 
   for (const intentDef of INTENTS) {
-    let score = 0
-    const matched: string[] = []
-
-    for (const kwGroup of intentDef.keywords) {
-      for (const kw of kwGroup.en) {
-        if (lower.includes(kw.toLowerCase())) {
-          score += kw.split(' ').length // multi-word keywords score higher
-          matched.push(kw)
-        }
-      }
-      if (kwGroup.ru) {
-        for (const kw of kwGroup.ru) {
-          if (lower.includes(kw.toLowerCase())) {
-            score += kw.split(' ').length
-            matched.push(kw)
-          }
-        }
-      }
-    }
-
-    score += intentDef.confidenceBoost
+    const { score: kwScore, matched } = scoreKeywords(intentDef.keywords, lower)
+    const score = kwScore + intentDef.confidenceBoost
     scores.push({ intent: intentDef, score, matched })
   }
 

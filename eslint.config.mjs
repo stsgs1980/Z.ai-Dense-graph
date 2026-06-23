@@ -29,8 +29,8 @@ const antiMonolithRules = {
   // Callback hell: max 3 nested callbacks
   "max-nested-callbacks": ["warn", { max: 3 }],
 
-  // Blocks (if/for/while): max 4 nested
-  "max-statements-per-line": ["warn", { max: 1 }],
+  // Multiple const on one line is idiomatic JS
+  "max-statements-per-line": ["warn", { max: 2 }],
 };
 
 const eslintConfig = [
@@ -79,6 +79,15 @@ const eslintConfig = [
       "no-undef": "off",
       "no-unreachable": "off",
       "no-useless-escape": "off",
+    },
+  },
+
+  // ─── shadcn/ui: auto-generated, exempt from size rules ────────────────────
+  {
+    files: ["src/components/ui/**"],
+    rules: {
+      "max-lines": "off",
+      "max-lines-per-function": "off",
     },
   },
 

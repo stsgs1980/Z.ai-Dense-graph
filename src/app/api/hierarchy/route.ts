@@ -11,6 +11,32 @@ interface TypedConnection {
   strength: number
 }
 
+function addSyncEdges(
+  group: any[],
+  syncSeen: Set<string>,
+  connections: TypedConnection[],
+) {
+  for (let i = 0; i < group.length; i++) {
+    for (let j = i + 1; j < group.length; j++) {
+      const a1 = group[i]
+      const a2 = group[j]
+      if (a1.parentId === a2.parentId) {
+        const key = [a1.id, a2.id].sort().join('-')
+        if (!syncSeen.has(key)) {
+          syncSeen.add(key)
+          connections.push({
+            id: `sync-${key}`,
+            from: a1.id,
+            to: a2.id,
+            type: 'sync',
+            strength: 0.5,
+          })
+        }
+      }
+    }
+  }
+}
+
 export async function GET() {
   try {
     const agents = await db.agent.findMany({
@@ -78,25 +104,7 @@ export async function GET() {
     // 2. Sync edges: between agents in same roleGroup with same parent (siblings)
     const syncSeen = new Set<string>()
     for (const group of Object.values(groups)) {
-      for (let i = 0; i < group.length; i++) {
-        for (let j = i + 1; j < group.length; j++) {
-          const a1 = group[i]
-          const a2 = group[j]
-          if (a1.parentId === a2.parentId) {
-            const key = [a1.id, a2.id].sort().join('-')
-            if (!syncSeen.has(key)) {
-              syncSeen.add(key)
-              connections.push({
-                id: `sync-${key}`,
-                from: a1.id,
-                to: a2.id,
-                type: 'sync',
-                strength: 0.5,
-              })
-            }
-          }
-        }
-      }
+      addSyncEdges(group, syncSeen, connections)
     }
 
     // 3. Twin edges

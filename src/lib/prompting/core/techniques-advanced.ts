@@ -1,47 +1,30 @@
 /**
- * @stsgs/prompting -- Advanced Techniques
- * 7 techniques: advanced difficulty level.
+ * @stsgs/prompting -- Advanced Techniques (10/20)
+ * Second half of the techniques array.
  */
 
 import type { PromptTechnique, OutputFormat } from './types'
 
-export const TECHNIQUES_ADVANCED: PromptTechnique[] = [
-  // ── Reasoning (advanced) ─────────────────────────────────
+export const advancedTechniques: PromptTechnique[] = [
   {
-    id: 'self-consistency',
-    name: 'Self-Consistency Check',
+    id: 'output-masking',
+    name: 'Output Masking (Redaction)',
     description:
-      'Ask the model to solve the same problem multiple times with different reasoning paths, ' +
-      'then select the most common answer. This exploits the observation that correct answers ' +
-      'tend to cluster around a single solution while wrong answers diverge. In a single prompt, ' +
-      'you can ask for 3 approaches and a consensus.',
-    category: 'reasoning',
-    applicableTo: ['plain-text', 'markdown'] as OutputFormat[],
-    difficulty: 'advanced',
+      'Instruct the model to mask or redact sensitive information in its output. This is useful ' +
+      'when processing logs, user data, or code that may contain secrets, PII, or credentials. ' +
+      'Combine with negative constraints for maximum effectiveness. The model should replace ' +
+      'sensitive values with consistent placeholders.',
+    category: 'constraint',
+    applicableTo: ['json', 'plain-text', 'code'] as OutputFormat[],
+    difficulty: 'intermediate',
     example:
-      'Solve this problem using 3 different approaches:\n' +
-      'Approach A: Algebraic method\n' +
-      'Approach B: Logical deduction\n' +
-      'Approach C: Estimation and verification\n\n' +
-      'After all 3 approaches, state which answer appears most consistently and why.',
+      'Review this code for security issues. When showing the code in your response:\n' +
+      '- Replace all API keys with [API_KEY_REDACTED]\n' +
+      '- Replace all URLs containing credentials with [URL_REDACTED]\n' +
+      '- Replace all email addresses with [EMAIL_REDACTED]\n' +
+      '- Replace all file paths containing usernames with [PATH_REDACTED]',
   },
-  {
-    id: 'assumption-challenge',
-    name: 'Assumption Challenge',
-    description:
-      'Explicitly ask the model to list its assumptions before answering, then challenge each ' +
-      'assumption. This prevents the model from silently embedding unstated assumptions that ' +
-      'may not match your intent. Particularly useful for design and architecture decisions ' +
-      'where hidden assumptions lead to wrong solutions.',
-    category: 'reasoning',
-    applicableTo: ['plain-text', 'markdown'] as OutputFormat[],
-    difficulty: 'advanced',
-    example:
-      'Before answering, list 5 assumptions you are making about this request. ' +
-      'For each assumption, rate your confidence (high/medium/low). ' +
-      'Then answer the question, noting which assumptions most affect your answer.',
-  },
-  // ── Role-Play (advanced) ─────────────────────────────────
+  // ── Role-Play ────────────────────────────────────────────
   {
     id: 'adversarial-reviewer',
     name: 'Adversarial Reviewer',
@@ -78,7 +61,48 @@ export const TECHNIQUES_ADVANCED: PromptTechnique[] = [
       '4. Security Engineer (wants minimal attack surface)\n\n' +
       'Each stakeholder gives their verdict: Approve / Reject / Approve with conditions.',
   },
-  // ── Meta (advanced) ──────────────────────────────────────
+  // ── Formatting ───────────────────────────────────────────
+  {
+    id: 'delimiter-pattern',
+    name: 'Delimiter Pattern',
+    description:
+      'Use clear delimiters (---, ###, XML tags) to separate different sections of the prompt ' +
+      'and expected output. Delimiters help the model understand where instructions end and ' +
+      'data begins. They also make prompts more readable for humans and easier to debug. ' +
+      'Triple-dash or XML-style tags work best for section separation.',
+    category: 'formatting',
+    applicableTo: ['json', 'markdown', 'code', 'yaml', 'plain-text'] as OutputFormat[],
+    difficulty: 'beginner',
+    example:
+      '<instructions>\n' +
+      'Extract all error codes from the log below. Return JSON with fields: code, message, count.\n' +
+      '</instructions>\n\n' +
+      '<data>\n' +
+      '[ERROR] E1001: Database connection failed (x15)\n' +
+      '[WARN] E2003: Cache miss rate above threshold (x8)\n' +
+      '</data>',
+  },
+  {
+    id: 'xml-tag-structure',
+    name: 'XML Tag Structure',
+    description:
+      'Wrap different prompt sections in semantic XML tags to give the model explicit ' +
+      'structure. This technique is used in production prompt engineering at scale because ' +
+      'it eliminates ambiguity about which part of the prompt is an instruction vs data vs ' +
+      'context vs example. Tags can be nested for complex prompts.',
+    category: 'formatting',
+    applicableTo: ['json', 'code', 'yaml', 'markdown'] as OutputFormat[],
+    difficulty: 'intermediate',
+    example:
+      '<role>You are a TypeScript code reviewer.</role>\n' +
+      '<task>Review the code for type safety issues.</task>\n' +
+      '<rules>\n' +
+      '  <rule priority="critical">No `any` types allowed.</rule>\n' +
+      '  <rule priority="high">All props must have explicit types.</rule>\n' +
+      '</rules>\n' +
+      '<code>${userCode}</code>',
+  },
+  // ── Meta ─────────────────────────────────────────────────
   {
     id: 'meta-prompting',
     name: 'Meta-Prompting (Prompt for Prompt)',
@@ -114,7 +138,7 @@ export const TECHNIQUES_ADVANCED: PromptTechnique[] = [
       'Step 3 (input: Step 2 output): "Write Zod validators for these types."\n' +
       'Step 4 (input: Step 3 output): "Review all 3 outputs for consistency."',
   },
-  // ── Chain-of-Thought (advanced) ──────────────────────────
+  // ── Chain-of-Thought ─────────────────────────────────────
   {
     id: 'tree-of-thought',
     name: 'Tree of Thought',
@@ -141,5 +165,43 @@ export const TECHNIQUES_ADVANCED: PromptTechnique[] = [
       '  - Cons: ...\n' +
       '  - Verdict: Continue or Abandon?\n\n' +
       'Select the best path and explain why.',
+  },
+  {
+    id: 'least-to-most',
+    name: 'Least-to-Most Prompting',
+    description:
+      'Decompose a complex problem into a series of increasingly complex subproblems. Solve the ' +
+      'simplest subproblem first, then use that solution to inform the next. This bottom-up ' +
+      'approach ensures the model has correct building blocks before attempting the full solution. ' +
+      'Each subproblem should be independently verifiable.',
+    category: 'chain-of-thought',
+    applicableTo: ['code', 'plain-text', 'markdown'] as OutputFormat[],
+    difficulty: 'intermediate',
+    example:
+      'Build a URL parser incrementally:\n' +
+      'Sub-problem 1: Extract the protocol (http/https) from a URL.\n' +
+      'Sub-problem 2: Extract the hostname (using solution from step 1 as context).\n' +
+      'Sub-problem 3: Extract the port number.\n' +
+      'Sub-problem 4: Extract the path segments.\n' +
+      'Sub-problem 5: Extract query parameters.\n' +
+      'Final: Combine all into a single parseUrl(url: string) function.',
+  },
+  {
+    id: 'plan-and-solve',
+    name: 'Plan and Solve',
+    description:
+      'First, ask the model to create a detailed plan. Then, ask it to execute each plan step. ' +
+      'This two-phase approach prevents the model from jumping to solutions without understanding ' +
+      'the full scope. The planning phase should be separate from the execution phase -- do not ' +
+      'let the model start solving while it is still planning.',
+    category: 'chain-of-thought',
+    applicableTo: ['markdown', 'code', 'plain-text'] as OutputFormat[],
+    difficulty: 'intermediate',
+    example:
+      'PHASE 1 - PLAN (do NOT write code yet):\n' +
+      'Create a numbered plan for implementing user authentication with NextAuth.js.\n' +
+      'Each step should be specific enough that a developer could implement it without guessing.\n\n' +
+      'PHASE 2 - EXECUTE (only after plan is approved):\n' +
+      'Implement each plan step in order. Show the code for each step.',
   },
 ]
