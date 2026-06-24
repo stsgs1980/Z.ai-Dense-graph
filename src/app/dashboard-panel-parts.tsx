@@ -1,12 +1,12 @@
 'use client'
 
-import { APP_NAME } from '@/lib/version'
-import { VersionBadge } from '@/components/ui/version-badge'
+import { APP_NAME } from '@/shared/lib/version'
+import { VersionBadge } from '@/shared/ui/version-badge'
 import {
   KPIStrip, StatusDistributionCard, TopPerformersCard, SystemHealthCard,
   NetworkActivityChart, RecentActivityTimeline, ConnectionHeatmap,
   FormulaAgentMappingGrid, WorkflowStatsSection, AgentEditModal,
-} from '@/components/dashboard'
+} from '@/features/dashboard/components'
 
 export function DashboardLoadingSpinner() {
   return (

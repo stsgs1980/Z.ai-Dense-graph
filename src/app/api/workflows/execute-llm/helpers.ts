@@ -7,7 +7,7 @@ import {
   withRetry,
   CircuitBreaker,
   type PromptContext,
-} from '@/lib/prompting'
+} from '@/shared/lib/prompting'
 
 // ─── ZAI singleton (server-side only) ─────────────────────────
 

@@ -3,11 +3,11 @@
   "version": "0.3.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000 2>&1 | tee dev.log",
+    "dev": "next dev -p 3000",
     "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
-    "postinstall": "bash scripts/apply-patches.sh",
+    "postinstall": "echo 'no patches to apply'",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
@@ -52,7 +52,6 @@
     "@tanstack/react-table": "^8.21.3",
     "@types/dagre": "^0.7.54",
     "@xyflow/react": "^12.10.2",
-    "@zai/select-element": "github:stsgs1980/SelectElement",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -86,6 +85,7 @@
     "zustand": "^5.0.6"
   },
   "devDependencies": {
+    "@stsgs1980/fab-inspector": "^3.5.1",
     "@tailwindcss/postcss": "^4",
     "@types/react": "^19",
     "@types/react-dom": "^19",

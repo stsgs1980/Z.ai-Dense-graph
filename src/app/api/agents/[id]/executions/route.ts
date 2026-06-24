@@ -1,6 +1,6 @@
-import { db } from '@/lib/db'
+import { db } from '@/shared/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
-import { formatStepExecution, computeExecutionStats } from '@/lib/agent-helpers'
+import { formatStepExecution, computeExecutionStats } from '@/shared/lib/agent-helpers'
 
 export async function GET(
   _req: NextRequest,

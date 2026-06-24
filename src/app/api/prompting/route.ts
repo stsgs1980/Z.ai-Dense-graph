@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { handlePromptingSection } from '@/lib/prompting-api-handlers'
+import { handlePromptingSection } from '@/shared/lib/prompting-api-handlers'
 
 export async function GET(request: Request) {
   try {

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 
 const AgentHierarchy = dynamic(
-  () => import('@/components/hierarchy/agent-hierarchy-v2'),
+  () => import('@/features/hierarchy/components/agent-hierarchy-v2'),
   { ssr: false }
 )
 

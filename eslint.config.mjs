@@ -4,9 +4,12 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { createRequire } from "module";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const require = createRequire(import.meta.url);
+const stsgsPlugin = require("./packages/eslint-plugin/dist/index.js").default;
 
 // ─── Version sync check ─────────────────────────────────────────────────────
 // Ensures src/lib/version.ts APP_VERSION matches package.json "version".
@@ -39,11 +42,11 @@ const versionsMatch = pkgVersion && srcVersion && pkgVersion === srcVersion;
 // Promote to "error" once the codebase is clean.
 
 const antiMonolithRules = {
-  // File size: warn at 350 lines, hard cap at 500
-  "max-lines": ["warn", { max: 350, skipBlankLines: true, skipComments: true }],
+  // File size: warn at 250 lines
+  "max-lines": ["warn", { max: 250, skipBlankLines: true, skipComments: true }],
 
-  // Function size: warn at 60 lines
-  "max-lines-per-function": ["warn", { max: 60, skipBlankLines: true, skipComments: true }],
+  // Function size: warn at 50 lines
+  "max-lines-per-function": ["warn", { max: 50, skipBlankLines: true, skipComments: true }],
 
   // Cyclomatic complexity: warn at 15
   complexity: ["warn", { max: 15 }],
@@ -65,9 +68,17 @@ const eslintConfig = [
   ...nextCoreWebVitals,
   ...nextTypescript,
   {
+    plugins: {
+      stsgs: stsgsPlugin,
+    },
     rules: {
       // ─── Anti-monolith (architectural) ───
       ...antiMonolithRules,
+
+      // Custom plugin: max 2 useState per component, no cross-layer imports
+      "stsgs/max-use-state": ["warn", { max: 2 }],
+      "stsgs/no-cross-layer-imports": "warn",
+      "stsgs/no-unicode": "warn",
 
       // TypeScript rules
       "@typescript-eslint/no-explicit-any": "off",
@@ -78,7 +89,7 @@ const eslintConfig = [
       "@typescript-eslint/no-unused-disable-directive": "off",
       
       // React rules
-      "react-hooks/exhaustive-deps": "off",
+      "react-hooks/exhaustive-deps": "warn",
       "react-hooks/purity": "off",
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/immutability": "off",
@@ -113,7 +124,7 @@ const eslintConfig = [
 
   // ─── shadcn/ui: auto-generated, exempt from size rules ────────────────────
   {
-    files: ["src/components/ui/**"],
+    files: ["src/shared/ui/**"],
     rules: {
       "max-lines": "off",
       "max-lines-per-function": "off",
@@ -121,13 +132,13 @@ const eslintConfig = [
     },
   },
 
-  // ─── Stricter rules for app/ and components/ (not lib/ or ui/) ─────────────
+  // ─── Stricter rules for app/ and features/ (not shared/ or lib/) ───────────
   {
-    files: ["src/app/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
-    ignores: ["src/components/ui/**"],
+    files: ["src/app/**/*.{ts,tsx}", "src/features/**/*.{ts,tsx}"],
+    ignores: ["src/shared/ui/**"],
     rules: {
-      // Page/component files: tighter file limit (300 lines)
-      "max-lines": ["warn", { max: 300, skipBlankLines: true, skipComments: true }],
+      // Page/component files: tighter file limit (200 lines)
+      "max-lines": ["warn", { max: 200, skipBlankLines: true, skipComments: true }],
       // Functions in components: 50 lines
       "max-lines-per-function": ["warn", { max: 50, skipBlankLines: true, skipComments: true }],
     },

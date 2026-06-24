@@ -3,10 +3,10 @@
 import { useState, useCallback } from 'react'
 import {
   DashboardHeader, DashboardSidebar, AgentEditModal,
-} from '@/components/dashboard'
-import { useDashboardData } from '@/hooks/use-dashboard-data'
-import { useAgentEdit } from '@/hooks/use-agent-edit'
-import { useDashboardWs } from '@/hooks/use-dashboard-ws'
+} from '@/features/dashboard/components'
+import { useDashboardData } from '@/features/dashboard/lib/use-dashboard-data'
+import { useAgentEdit } from '@/features/hierarchy/lib/use-agent-edit'
+import { useDashboardWs } from '@/features/dashboard/lib/use-dashboard-ws'
 import {
   DashboardLoadingSpinner, DashboardMainContent, DashboardFooter,
   DASHBOARD_KEYFRAMES,

@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import DashboardPanel from './dashboard-panel'
-import AgentHierarchy from '@/components/hierarchy/agent-hierarchy-v2'
-import WorkflowPipeline from '@/components/workflows/workflow-pipeline'
+import AgentHierarchy from '@/features/hierarchy/components/agent-hierarchy-v2'
+import WorkflowPipeline from '@/features/workflows/components/workflow-pipeline'
 
 export default function Home() {
   const [activeView, setActiveView] = useState<'dashboard' | 'hierarchy' | 'workflows'>('dashboard')

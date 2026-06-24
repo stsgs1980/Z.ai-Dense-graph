@@ -1,6 +1,6 @@
-import { db } from '@/lib/db'
+import { db } from '@/shared/lib/db'
 import { NextResponse } from 'next/server'
-import { buildAgentTree, groupByRoleGroup, computeAgentStats, buildAllConnections } from '@/lib/hierarchy-builder'
+import { buildAgentTree, groupByRoleGroup, computeAgentStats, buildAllConnections } from '@/shared/lib/hierarchy-builder'
 
 export async function GET() {
   try {

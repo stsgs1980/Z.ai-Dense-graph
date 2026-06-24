@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { db } from '@/shared/lib/db'
 
 const WORKFLOW_DEFS = [
   // 1. Full Development Pipeline: Request → Analyst → Coordinator → Coder → Tester → Inspector

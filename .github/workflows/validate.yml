@@ -19,7 +19,7 @@ jobs:
           echo "Checking structure..."
           MISSING=0
           for f in \
-            AGENT_RULES.md \
+            .agent-rules.md \
             PROJECT_CONFIG.md \
             README.md \
             skills/git-safe-ops/SKILL.md \
@@ -67,7 +67,7 @@ jobs:
         run: |
           echo "Checking Stack Signature footer..."
           ERRORS=0
-          for f in AGENT_RULES.md README.md; do
+          for f in .agent-rules.md README.md; do
             if [ -f "$f" ]; then
               if ! grep -q "Built with:" "$f"; then
                 echo "NO FOOTER: $f"
@@ -87,7 +87,7 @@ jobs:
             --include='*.yml' --include='*.yaml' --include='*.json' --include='*.css' \
             --include='*.xsd' --include='*.tex' --include='*.sty' \
             skills/ docs/instructions/ docs/standards/ docs/templates/ \
-            AGENT_RULES.md README.md PROJECT_CONFIG.md 2>/dev/null; then
+            .agent-rules.md README.md PROJECT_CONFIG.md 2>/dev/null; then
             echo "Found trailing whitespace"
             exit 1
           fi
@@ -101,7 +101,7 @@ jobs:
             --include='*.yml' --include='*.yaml' --include='*.json' --include='*.css' \
             --include='*.xsd' --include='*.tex' --include='*.sty' \
             skills/ docs/instructions/ docs/standards/ docs/templates/ \
-            AGENT_RULES.md README.md PROJECT_CONFIG.md 2>/dev/null; then
+            .agent-rules.md README.md PROJECT_CONFIG.md 2>/dev/null; then
             echo "Found tabs (use spaces only)"
             exit 1
           fi

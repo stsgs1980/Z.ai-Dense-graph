@@ -19,7 +19,7 @@ jobs:
           echo "Checking required files..."
           MISSING=0
           # Core files
-          for f in AGENT_RULES.md PROJECT_CONFIG.md README.md; do
+          for f in .agent-rules.md PROJECT_CONFIG.md README.md; do
             if [ ! -f "$f" ]; then
               echo "MISSING: $f"
               MISSING=1
@@ -82,9 +82,9 @@ jobs:
 
       - name: Check Stack Signature in key files
         run: |
-          echo "Checking Stack Signature in AGENT_RULES.md and README.md..."
+          echo "Checking Stack Signature in .agent-rules.md and README.md..."
           FAIL=0
-          for f in AGENT_RULES.md README.md; do
+          for f in .agent-rules.md README.md; do
             if ! grep -q 'Built with:' "$f"; then
               echo "NO Stack Signature in: $f"
               FAIL=1

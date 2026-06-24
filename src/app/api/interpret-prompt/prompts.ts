@@ -1,4 +1,4 @@
-import { matchIntent, getInstructionContent, scorePrompt } from '@/lib/prompting'
+import { matchIntent, getInstructionContent, scorePrompt } from '@/shared/lib/prompting'
 
 export const BASE_SYSTEM_PROMPT = `You are a layout advisor AI for @stsgs/ui component library. Parse the user's natural language description and extract structured layout context.
 

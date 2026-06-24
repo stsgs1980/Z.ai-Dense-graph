@@ -7,9 +7,9 @@ import {
   buildStepUserPrompt,
   WorkflowError,
   type AgentRecord,
-} from '@/lib/workflow-execution'
+} from '@/features/workflows/lib/workflow-execution'
 import { buildAgentSystemPrompt, callLLM, parseLLMOutput } from './helpers'
-import { runLLMPipeline } from '@/lib/workflow-pipeline'
+import { runLLMPipeline } from '@/features/workflows/lib/workflow-pipeline'
 
 async function callStepLLM(
   step: { action: string; name: string },

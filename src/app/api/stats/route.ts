@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { computeStats } from '@/lib/stats-computations'
+import { computeStats } from '@/shared/lib/stats-computations'
 
 export async function GET() {
   try {

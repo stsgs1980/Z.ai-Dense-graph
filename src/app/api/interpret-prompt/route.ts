@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { callInterpretLLM } from '@/lib/interpret-prompt-helpers'
+import { callInterpretLLM } from '@/shared/lib/interpret-prompt-helpers'
 import { buildEnhancedSystemPrompt, evaluatePromptQuality, parseAndValidate } from './prompts'
 
 export async function POST(request: NextRequest) {

@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "@/components/ui/sonner";
-// TODO: restore after @zai/select-element is available
-// import { SelectElementFAB } from "@zai/select-element";
+import { Toaster } from "@/shared/ui/toaster";
+import { Toaster as SonnerToaster } from "@/shared/ui/sonner";
+import { SelectElementFab } from '@stsgs1980/fab-inspector';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,6 +51,8 @@ export default function RootLayout({
         {/* <SelectElementFAB /> */}
         <Toaster />
         <SonnerToaster />
+        <SelectElementFab />
+
       </body>
     </html>
   );

@@ -6,8 +6,8 @@ import {
   finalizeExecution,
   simulateStepExecution,
   WorkflowError,
-} from '@/lib/workflow-execution'
-import { runSimulatedPipeline } from '@/lib/workflow-pipeline'
+} from '@/features/workflows/lib/workflow-execution'
+import { runSimulatedPipeline } from '@/features/workflows/lib/workflow-pipeline'
 
 export async function POST(req: NextRequest) {
   try {

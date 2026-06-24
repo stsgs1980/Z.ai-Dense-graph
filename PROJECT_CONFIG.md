@@ -51,10 +51,10 @@ Built with: Next.js 16 + TypeScript + Tailwind CSS
 | `src/data/` | Dashboard configuration constants |
 | `prisma/` | Database schema and seed |
 | `mini-services/ws-service/` | WebSocket service (port 3003) |
-| `instructions/` | Agent behavioral instructions |
+| `docs/instructions/` | Agent behavioral instructions |
 | `skills/` | Automated agent skills |
-| `standards/` | Governance documents (Group B) |
-| `templates/` | Operational templates (Group A) |
+| `docs/standards/` | Governance documents (Group B) |
+| `docs/templates/` | Operational templates (Group A) |
 
 ---
 
@@ -62,7 +62,7 @@ Built with: Next.js 16 + TypeScript + Tailwind CSS
 
 - Use **shadcn/ui** components, do not build from scratch
 - TypeScript throughout with strict typing
-- Anti-monolith: component max 150 lines, file max 200 lines
+- Anti-monolith: file max 250 lines (global), 200 lines (components), function max 50 lines, max 2 useState per component
 
 ---
 
@@ -82,4 +82,4 @@ DATABASE_URL="file:./db/dev.db"
 
 - This file is the single source of truth for project-specific configuration
 - When switching to a different stack, update only this file
-- AGENT_RULES.md references this file for all project-dependent settings
+- `.agent-rules.md` references this file for all project-dependent settings

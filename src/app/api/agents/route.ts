@@ -1,6 +1,6 @@
-import { db } from '@/lib/db'
+import { db } from '@/shared/lib/db'
 import { NextResponse } from 'next/server'
-import { resolvePromptingMeta, resolveFormulaMeta, resolveSystemPrompt } from '@/lib/agent-helpers'
+import { resolvePromptingMeta, resolveFormulaMeta, resolveSystemPrompt } from '@/shared/lib/agent-helpers'
 
 export async function GET(request: Request) {
   try {

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getCognitiveFormula, matchIntent, getBestAgentForIntent } from '@/lib/prompting'
+import { getCognitiveFormula, matchIntent, getBestAgentForIntent } from '@/shared/lib/prompting'
 import {
   resolveAgentData,
   buildAgentPromptContext,
   resolveCognitiveFormulaId,
   buildFormulaTemplate,
-} from '@/lib/agent-helpers'
+} from '@/shared/lib/agent-helpers'
 
 export async function POST(request: Request) {
   try {

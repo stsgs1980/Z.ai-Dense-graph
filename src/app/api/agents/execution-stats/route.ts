@@ -1,6 +1,6 @@
-import { db } from '@/lib/db'
+import { db } from '@/shared/lib/db'
 import { NextResponse } from 'next/server'
-import { aggregateAgentStats } from '@/lib/agent-helpers'
+import { aggregateAgentStats } from '@/shared/lib/agent-helpers'
 
 export async function GET() {
   try {
