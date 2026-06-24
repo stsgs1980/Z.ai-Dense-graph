@@ -76,7 +76,7 @@
         "zustand": "^5.0.6",
       },
       "devDependencies": {
-        "@stsgs1980/fab-inspector": "^3.5.1",
+        "@stsgs1980/fab-inspector": "^3.6.0",
         "@tailwindcss/postcss": "^4",
         "@types/react": "^19",
         "@types/react-dom": "^19",
@@ -612,7 +612,7 @@
 
     "@stitches/core": ["@stitches/core@1.2.8", "", {}, "sha512-Gfkvwk9o9kE9r9XNBmJRfV8zONvXThnm1tcuojL04Uy5uRyqg93DC83lDebl0rocZCfKSjUv+fWYtMQmEDJldg=="],
 
-    "@stsgs1980/fab-inspector": ["@stsgs1980/fab-inspector@3.5.1", "", { "peerDependencies": { "framer-motion": ">=11.0.0", "next": ">=15.0.0", "react": ">=19.0.0", "react-syntax-highlighter": ">=15.0.0" }, "bin": { "fab-inspector": "cli/init.mjs" } }, "sha512-cYTDXUlw3dS74/auC8Ylo2iySvw/+EMOJq14RlTJJoA4Mkfdych2FC+inRDNFAzgWBksBAN5ZYyLFkE5n/kOoA=="],
+    "@stsgs1980/fab-inspector": ["@stsgs1980/fab-inspector@3.6.0", "", { "peerDependencies": { "framer-motion": ">=11.0.0", "next": ">=15.0.0", "react": ">=19.0.0", "react-syntax-highlighter": ">=15.0.0" }, "bin": { "fab-inspector": "cli/init.mjs" } }, "sha512-PItWhXLaiFxZPPefTBn2nmE8Wqd8heJmQhnt9aG1kJSMBbDTYlv4dhBRm3E/8jNjrm9aBAtM0r8mBODDh8ut2A=="],
 
     "@swc/core": ["@swc/core@1.15.43", "", { "dependencies": { "@swc/counter": "^0.1.3", "@swc/types": "^0.1.27" }, "optionalDependencies": { "@swc/core-darwin-arm64": "1.15.43", "@swc/core-darwin-x64": "1.15.43", "@swc/core-linux-arm-gnueabihf": "1.15.43", "@swc/core-linux-arm64-gnu": "1.15.43", "@swc/core-linux-arm64-musl": "1.15.43", "@swc/core-linux-ppc64-gnu": "1.15.43", "@swc/core-linux-s390x-gnu": "1.15.43", "@swc/core-linux-x64-gnu": "1.15.43", "@swc/core-linux-x64-musl": "1.15.43", "@swc/core-win32-arm64-msvc": "1.15.43", "@swc/core-win32-ia32-msvc": "1.15.43", "@swc/core-win32-x64-msvc": "1.15.43" }, "peerDependencies": { "@swc/helpers": ">=0.5.17" }, "optionalPeers": ["@swc/helpers"] }, "sha512-1CuKjFkPxIgGdeHVuNbkxmBxkcbdc08u0aiI43pFq6yY1tTVKmXT9hFEooyyKs/sJ3xf1GPHyEwTtk9Xl8dvQw=="],
 
