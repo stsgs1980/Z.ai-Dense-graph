@@ -48,7 +48,7 @@ const rule: Rule.RuleModule = {
           }
         }
       },
-      JSXText(node) {
+      JSXText(node: any) {
         if (EMOJI_PATTERN.test(node.value)) {
           context.report({
             node,

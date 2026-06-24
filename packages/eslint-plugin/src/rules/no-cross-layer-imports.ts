@@ -1,103 +1,117 @@
 import type { Rule } from 'eslint'
 
-/**
- * Layer hierarchy: lower index = lower layer (can only import from same or lower)
- * tokens(0) → ui(1) → sections(2) → features(3) → hooks(4) → providers(5)
- */
-const LAYERS = ['tokens', 'ui', 'sections', 'features', 'hooks', 'providers'] as const
-type Layer = (typeof LAYERS)[number]
-
-const LAYER_INDEX: Record<Layer, number> = {
-  tokens: 0,
-  ui: 1,
-  sections: 2,
-  features: 3,
-  hooks: 4,
-  providers: 5,
+interface LayerRule {
+  from: RegExp
+  forbiddenImports: RegExp[]
+  message: string
 }
 
-/** Detect which layer a file belongs to based on its path */
-function detectLayer(filePath: string): Layer | null {
-  const normalized = filePath.replace(/\\/g, '/')
-  for (const layer of LAYERS) {
-    // Match patterns like /ui/Button.tsx, /ui/index.ts, @stsgs/ui/ui/Button
-    if (
-      normalized.includes(`/${layer}/`) ||
-      normalized.includes(`/${layer}"`) ||
-      normalized.includes(`/stsgs/ui/${layer}`)
-    ) {
-      return layer
-    }
-  }
-  return null
-}
-
-/** Detect target layer from an import path */
-function detectImportLayer(importPath: string): Layer | null {
-  // Direct layer import: @stsgs/ui/sections, @stsgs/ui/features
-  const directMatch = importPath.match(/@stsgs\/ui\/(\w+)/)
-  if (directMatch) {
-    const layer = directMatch[1] as Layer
-    if (LAYERS.includes(layer)) return layer
-  }
-
-  // Relative import: ../ui/Button, ./sections/HeroSection
-  const relMatch = importPath.match(/(?:\.\.\/)*(\w+)\//)
-  if (relMatch) {
-    const layer = relMatch[1] as Layer
-    if (LAYERS.includes(layer)) return layer
-  }
-
-  return null
-}
+const LAYER_RULES: LayerRule[] = [
+  {
+    from: /\/shared\/ui\//,
+    forbiddenImports: [
+      /\/shared\/hooks\//,
+      /\/features\//,
+      /\/app\//,
+      /\/entities\//,
+    ],
+    message:
+      'shared/ui/ (base layer) cannot import from features/, entities/, app/, or shared/hooks/. Use only external libs.',
+  },
+  {
+    from: /\/shared\/lib\//,
+    forbiddenImports: [
+      /\/features\//,
+      /\/app\//,
+    ],
+    message:
+      'shared/lib/ (utilities layer) cannot import from features/ or app/. Dependencies flow into lib/, not out.',
+  },
+  {
+    from: /\/shared\/hooks\//,
+    forbiddenImports: [
+      /\/features\//,
+      /\/app\//,
+    ],
+    message:
+      'shared/hooks/ cannot import from features/ or app/. Should only depend on shared/lib/, shared/config/, or external deps.',
+  },
+  {
+    from: /\/shared\/config\//,
+    forbiddenImports: [
+      /\/features\//,
+      /\/app\//,
+    ],
+    message:
+      'shared/config/ (static data) cannot import from features/ or app/. Must be self-contained.',
+  },
+]
 
 export const noCrossLayerImports: Rule.RuleModule = {
   meta: {
     type: 'problem',
     docs: {
-      description: 'Enforce one-directional layer dependencies in @stsgs/ui',
+      description: 'Enforce FSD layer boundaries in src/ — forbid upward imports',
       category: 'Architecture',
       recommended: true,
     },
     messages: {
       crossLayerImport:
-        'Cross-layer import detected: "{{fileLayer}}" imports from "{{importLayer}}". ' +
-        'Dependencies must flow downward: tokens → ui → sections → features → hooks → providers. ' +
-        '{{fileLayer}} (layer {{fileIndex}}) cannot import from {{importLayer}} (layer {{importIndex}}).',
+        '{{message}} File: "{{fromFile}}" imports "{{importPath}}".',
     },
     schema: [],
   },
 
   create(context) {
-    const fileLayer = detectLayer(context.filename)
+    const filename = context.filename.replace(/\\/g, '/')
 
-    // Only check files within the @stsgs/ui layer structure
-    if (!fileLayer) return {}
+    if (!filename.includes('/src/')) return {}
+
+    const matchedRule = LAYER_RULES.find((rule) => rule.from.test(filename))
+    if (!matchedRule) return {}
 
     return {
       ImportDeclaration(node) {
         const importPath = node.source.value as string
-        const importLayer = detectImportLayer(importPath)
-
-        if (!importLayer) return
-
-        const fileIndex = LAYER_INDEX[fileLayer]
-        const importIndex = LAYER_INDEX[importLayer]
-
-        // Upward import: file imports from a higher layer (forbidden)
-        if (importIndex > fileIndex) {
-          context.report({
-            node: node.source,
-            messageId: 'crossLayerImport',
-            data: {
-              fileLayer,
-              importLayer,
-              fileIndex,
-              importIndex,
-            },
-          })
+        if (importPath.startsWith('.')) {
+          const resolved = resolveRelativeImport(filename, importPath)
+          if (resolved && matchedRule.forbiddenImports.some((p) => p.test(resolved))) {
+            context.report({
+              node: node.source,
+              messageId: 'crossLayerImport',
+              data: { message: matchedRule.message, fromFile: filename, importPath },
+            })
+          }
+        } else if (importPath.startsWith('@/')) {
+          const resolved = importPath.replace(/^@\//, '/src/')
+          if (matchedRule.forbiddenImports.some((p) => p.test(resolved))) {
+            context.report({
+              node: node.source,
+              messageId: 'crossLayerImport',
+              data: { message: matchedRule.message, fromFile: filename, importPath },
+            })
+          }
         }
       },
     }
   },
+}
+
+function resolveRelativeImport(fromFile: string, importPath: string): string | null {
+  const fromDir = fromFile.substring(0, fromFile.lastIndexOf('/'))
+  const normalized = importPath.replace(/^\.\//, '')
+  const segments = normalized.split('/')
+  let depth = 0
+  const pathSegments: string[] = fromDir.split('/').filter(Boolean)
+
+  for (const seg of segments) {
+    if (seg === '..') {
+      if (pathSegments.length > 0) pathSegments.pop()
+      else return null
+    } else if (seg !== '.') {
+      pathSegments.push(seg)
+    }
+  }
+
+  return '/' + pathSegments.join('/')
 }
