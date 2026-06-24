@@ -5,6 +5,7 @@ import { Toaster } from "@/shared/ui/toaster";
 import { Toaster as SonnerToaster } from "@/shared/ui/sonner";
 import { SelectElementFab } from '@stsgs1980/fab-inspector';
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -51,6 +52,7 @@ export default function RootLayout({
         <Toaster />
         <SonnerToaster />
         <SelectElementFab />
+
 
       </body>
     </html>
