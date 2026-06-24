@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  transpilePackages: ['@zai/select-element'],
   typescript: {
     ignoreBuildErrors: true,
   },
