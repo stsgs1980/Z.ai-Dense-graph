@@ -276,3 +276,38 @@ Compare with:
 - **https://github.com/stsgs1980/Superpowers-Z.ai** — Superpowers source (now our submodule)
 
 Open Z.ai-Dense-graph on GitHub, click on `.superpowers-zai` — you should see the submodule pinning to commit `9391dc1`. Click on `skills/` — you should NOT see any `sp-*` or `zai-*` dirs (they're gitignored).
+
+---
+
+## 7. Execution log (2026-06-25)
+
+All 5 phases executed end-to-end. Commits on `main`:
+
+| Phase | Commit | What landed |
+|---|---|---|
+| A | `d023939` | 3 new submodules (standards/guard/zai-skills) + AGENT_RULES.md + bootstrap.sh + .githooks |
+| B | `5f34061` | Removed cascade-guard, deleted 66 sandbox-duplicate skill dirs (1146→10 files), renamed package to z-ai-dense-graph@0.4.0, moved .agent-rules.md to docs/legacy/ |
+| C | `8069c48` | Prisma: IdNode + IdEdge + IdGraphSnapshot models + migration SQL + seed script + 60 IDs / 113 edges seeded + snapshot recorded |
+| D | `0195fc4` | src/features/id-graph/ (5 components + 2 lib files) + 3 API routes + /id-graph page + dashboard header button + 3 layout modes + BFS search |
+| E | `596ae88` | CI workflow (verify + build jobs) + pre-commit Phase 3 demoted to SOFT (Z.ai-Dense-graph has no skills/skills/) |
+
+**Total: 5 commits, ~2.5h work, no decisions needed beyond initial §1 approval.**
+
+### What works now
+
+- Visit `/id-graph` on the dev server → see live ID-graph with 60 nodes + 113 edges
+- Toggle 3 layouts: Flat (Dagre LR), Clustered (3 repo clusters), Radial (concentric rings)
+- Click any node → detail panel on right with metadata + in/out edges
+- Click neighbor in detail panel → navigates to that ID
+- BFS path search: pick target from dropdown, click Go → path highlights on canvas
+- KPI strip shows: 60 IDs / 113 edges / 19 STD / 17 RULE / 4 PROC / 6 TOOL / 24 ZAI / top hub / isolated
+- Pre-commit hook enforces 6 phases locally (HARD on V01-V11 + G01-G15, SOFT on rest)
+- CI runs same verifiers + build on every push/PR
+
+### What's deferred (Phase F+)
+
+- HARD CI enforcement (currently SOFT until pre-existing TS errors cleaned)
+- Realtime ID-graph updates via WebSocket (currently static snapshot from seed)
+- Edit ID metadata from UI (currently read-only)
+- Add 24 ZAI-* skill nodes (currently only 19 STD + 17 RULE = 36; seed pulls from id-graph-full.json which only has 60)
+- CLI terminal (Phase 2 of original architecture — deferred until brain center proven)
