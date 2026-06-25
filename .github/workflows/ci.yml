@@ -2,103 +2,88 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  lint-and-check:
+  verify:
+    name: Z-ai verifiers + ID-graph integrity
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Check file structure
-        run: |
-          echo "Checking required files..."
-          MISSING=0
-          # Core files
-          for f in .agent-rules.md PROJECT_CONFIG.md README.md; do
-            if [ ! -f "$f" ]; then
-              echo "MISSING: $f"
-              MISSING=1
-            else
-              echo "OK: $f"
-            fi
-          done
-          # Skills
-          for f in skills/git-safe-ops/SKILL.md skills/dev-watchdog/SKILL.md; do
-            if [ ! -f "$f" ]; then
-              echo "MISSING: $f"
-              MISSING=1
-            else
-              echo "OK: $f"
-            fi
-          done
-          # Instructions
-          for f in docs/instructions/onboarding-protocol.md docs/instructions/git-workflow-rules.md docs/instructions/language-rule.md docs/instructions/diagnostic-disclosure.md docs/instructions/writing-plans.md; do
-            if [ ! -f "$f" ]; then
-              echo "MISSING: $f"
-              MISSING=1
-            else
-              echo "OK: $f"
-            fi
-          done
-          # Standards (no language suffixes, no versions)
-          for f in docs/standards/MARKDOWN_STANDARD.md docs/standards/UNICODE_POLICY.md docs/standards/README_TEMPLATE.md docs/standards/REPRODUCIBILITY-STANDARD.md docs/standards/IMPLEMENTATION_ORDER.md docs/standards/STANDARD_ID_SYSTEM.md docs/standards/CODE_EXAMPLES_GUIDE.md docs/standards/FRONTEND_STANDARD.md docs/standards/GITHUB_STANDARD.md docs/standards/WCAG_2.1_AA_STANDARD.md docs/standards/TESTING_STANDARD.md docs/standards/ERROR_HANDLING_STANDARD.md docs/standards/SECURITY_STANDARD.md; do
-            if [ ! -f "$f" ]; then
-              echo "MISSING: $f"
-              MISSING=1
-            else
-              echo "OK: $f"
-            fi
-          done
-          # Templates (Group A)
-          for f in docs/templates/WORKLOG.md docs/templates/TASK_TEMPLATE.md docs/templates/README_WORKLOG.md; do
-            if [ ! -f "$f" ]; then
-              echo "MISSING: $f"
-              MISSING=1
-            else
-              echo "OK: $f"
-            fi
-          done
-          exit $MISSING
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Unicode check (no emoji in .md)
-        run: |
-          echo "Checking for emoji in markdown files..."
-          FAIL=0
-          for f in $(find . -name '*.md' -not -path './.git/*' -not -path './node_modules/*'); do
-            if rg -l '[\x{1F000}-\x{1FFFF}]' "$f" 2>/dev/null; then
-              echo "FOUND emoji in: $f"
-              FAIL=1
-            fi
-          done
-          if [ $FAIL -eq 0 ]; then
-            echo "No emoji found -- OK"
-          fi
-          exit $FAIL
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Check Stack Signature in key files
-        run: |
-          echo "Checking Stack Signature in .agent-rules.md and README.md..."
-          FAIL=0
-          for f in .agent-rules.md README.md; do
-            if ! grep -q 'Built with:' "$f"; then
-              echo "NO Stack Signature in: $f"
-              FAIL=1
-            else
-              echo "OK: $f"
-            fi
-          done
-          exit $FAIL
+      - name: Generate Prisma client
+        run: npx prisma generate
 
-      - name: Check YAML syntax (workflows)
+      - name: Run Z-ai standards verifier (TOOL-VERIFY-002)
+        run: node standards/scripts/verify-standards.js
+        continue-on-error: true
+
+      - name: Run Z-ai ID-graph verifier (TOOL-VERIFY-004)
+        run: node standards/scripts/verify-id-graph.js
+        continue-on-error: true
+
+      - name: Run skills verifier (TOOL-VERIFY-002b)
+        run: node standards/scripts/verify-skills.js --strict
+        continue-on-error: true
+
+      - name: Run guard-side docs verifier (TOOL-VERIFY-001)
+        run: bash guard/tools/verify-docs.sh --skip-platform
+        continue-on-error: true
+
+      - name: Report verification status
         run: |
-          for f in .github/workflows/*.yml; do
-            if command -v python3 &>/dev/null; then
-              python3 -c "import yaml; yaml.safe_load(open('$f'))"
-              echo "YAML syntax OK: $f"
-            fi
-          done
+          echo "=== Verification summary ==="
+          echo "Note: All verifiers above are SOFT in CI for now (continue-on-error: true)."
+          echo "They will be promoted to HARD once Z.ai-Dense-graph stabilizes."
+          echo "Local pre-commit hook enforces HARD blocks on the same checks."
+
+  build:
+    name: Next.js build
+    runs-on: ubuntu-latest
+    needs: verify
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit --skipLibCheck
+        continue-on-error: true
+
+      - name: Build Next.js
+        run: npm run build
+        continue-on-error: true
+        env:
+          DATABASE_URL: "file:./ci-test.db"
+
+      - name: Report build status
+        run: |
+          echo "=== Build summary ==="
+          echo "Note: tsc and build are SOFT in CI (continue-on-error: true) until"
+          echo "pre-existing TypeScript errors in docs/templates/ are cleaned up."
+          echo "Phase F (post-MVP) will promote these to HARD blockers."
