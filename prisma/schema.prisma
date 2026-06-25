@@ -119,3 +119,62 @@ model AgentMessage {
   metadata        String        @default("{}") // JSON: routing info, headers, correlation IDs
   timestamp       DateTime      @default(now())
 }
+
+// ─── Z-ai Brain Center: ID-graph (added Phase C) ─────────────────────────────
+// Models the 60-ID / 113-edge graph from Z-ai-platform:
+//   - 19 STD-* standards (in standards/ submodule)
+//   - 17 RULE-* rules (in guard/ submodule)
+//   - 4 PROC-* procedures (in guard/ submodule)
+//   - 6 TOOL-* tools (in guard/ submodule)
+//   - 24 ZAI-* skills (in zai-skills/ submodule)
+// Edges: 106 Related + 7 Aligned_with
+// Source of truth: standards/standards/META-001-id-registry.md + guard/registry.json
+
+model IdNode {
+  id             String   @id // e.g. "STD-META-001", "RULE-MONOLITH-012", "TOOL-VERIFY-001"
+  title          String
+  category       String   // STD | RULE | PROC | TOOL | ZAI
+  repo           String   // standards | guard | zai-skills
+  version        String   @default("1.0")
+  status         String   @default("ACTIVE") // ACTIVE | RETIRED | DEPRECATED
+  level          String?  // critical | high | medium | low (RULE only)
+  filePath       String?  // path to source file (relative to repo root)
+  owningStandard String?  // e.g. "STD-META-001 v2.0.4"
+  description    String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Edges where this node is the source
+  outEdges       IdEdge[] @relation("IdEdgeSource")
+  // Edges where this node is the target
+  inEdges        IdEdge[] @relation("IdEdgeTarget")
+}
+
+model IdEdge {
+  id           String   @id @default(cuid())
+  sourceId     String
+  targetId     String
+  type         String   // Related | Aligned_with
+  source       IdNode   @relation("IdEdgeSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target       IdNode   @relation("IdEdgeTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@unique([sourceId, targetId, type])
+  @@index([sourceId])
+  @@index([targetId])
+}
+
+// ─── ID-graph snapshot (for fast dashboard loads) ────────────────────────────
+// One row per snapshot. Captures counts + summary at a point in time.
+model IdGraphSnapshot {
+  id           String   @id @default(cuid())
+  capturedAt   DateTime @default(now())
+  platformTag  String   // e.g. "v2.6.0"
+  standardsSha String
+  guardSha     String
+  skillsSha    String
+  countsJson   String   // {"STD":19,"RULE":17,"PROC":4,"TOOL":6,"ZAI":24,"total":60}
+  edgesJson    String   // {"Related":106,"Aligned_with":7,"total":113}
+  topHubsJson  String   // top 5 IDs by in-degree
+  isolatedJson String   // IDs with no edges
+}
