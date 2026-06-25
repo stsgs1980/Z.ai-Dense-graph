@@ -41,9 +41,9 @@ function NotificationsDropdown({ show, onClose }: { show: boolean; onClose: () =
   )
 }
 
-function HeaderActions({ refreshing, handleRefresh, showNotifications, setShowNotifications, onOpenWorkflows, onOpenHierarchy, lastUpdated }: {
+function HeaderActions({ refreshing, handleRefresh, showNotifications, setShowNotifications, onOpenWorkflows, onOpenHierarchy, onOpenIdGraph, lastUpdated }: {
   refreshing: boolean; handleRefresh: () => void; showNotifications: boolean; setShowNotifications: (v: boolean) => void;
-  onOpenWorkflows?: () => void; onOpenHierarchy: () => void; lastUpdated: string
+  onOpenWorkflows?: () => void; onOpenHierarchy: () => void; onOpenIdGraph?: () => void; lastUpdated: string
 }) {
   return (
     <div className="flex items-center gap-2 flex-shrink-0">
@@ -58,6 +58,11 @@ function HeaderActions({ refreshing, handleRefresh, showNotifications, setShowNo
         </button>
         <NotificationsDropdown show={showNotifications} onClose={() => setShowNotifications(false)} />
       </div>
+      {onOpenIdGraph && (
+        <button onClick={onOpenIdGraph} className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all duration-200 hover:scale-105" style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.3)', color: '#A855F7' }}>
+          ID-Graph
+        </button>
+      )}
       {onOpenWorkflows && (
         <button onClick={onOpenWorkflows} className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all duration-200 hover:scale-105" style={{ background: 'rgba(8,145,178,0.12)', border: '1px solid rgba(8,145,178,0.3)', color: '#0891B2' }}>
           <Workflow className="w-3 h-3 inline mr-1" />Workflows
@@ -68,8 +73,8 @@ function HeaderActions({ refreshing, handleRefresh, showNotifications, setShowNo
   )
 }
 
-export function DashboardHeader({ onOpenHierarchy, onOpenWorkflows, onToggleSidebar, onRefresh, wsConnected }: {
-  onOpenHierarchy: () => void; onOpenWorkflows?: () => void; onToggleSidebar: () => void; onRefresh?: () => void; wsConnected?: boolean
+export function DashboardHeader({ onOpenHierarchy, onOpenWorkflows, onOpenIdGraph, onToggleSidebar, onRefresh, wsConnected }: {
+  onOpenHierarchy: () => void; onOpenWorkflows?: () => void; onOpenIdGraph?: () => void; onToggleSidebar: () => void; onRefresh?: () => void; wsConnected?: boolean
 }) {
   const [lastUpdated, setLastUpdated] = useState<string>('')
   const [refreshing, setRefreshing] = useState(false)
@@ -111,7 +116,7 @@ export function DashboardHeader({ onOpenHierarchy, onOpenWorkflows, onToggleSide
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3" style={{ color: '#64748B' }} />
           <div className="w-full pl-7 pr-3 py-1.5 rounded-md text-[11px]" style={{ background: 'rgba(30,30,30,0.8)', border: '1px solid rgba(51,51,51,0.4)', color: '#64748B' }}>Search agents, formulas, tasks...</div>
         </div>
-        <HeaderActions refreshing={refreshing} handleRefresh={handleRefresh} showNotifications={showNotifications} setShowNotifications={setShowNotifications} onOpenWorkflows={onOpenWorkflows} onOpenHierarchy={onOpenHierarchy} lastUpdated={lastUpdated} />
+        <HeaderActions refreshing={refreshing} handleRefresh={handleRefresh} showNotifications={showNotifications} setShowNotifications={setShowNotifications} onOpenWorkflows={onOpenWorkflows} onOpenIdGraph={onOpenIdGraph} onOpenHierarchy={onOpenHierarchy} lastUpdated={lastUpdated} />
       </div>
     </header>
   )

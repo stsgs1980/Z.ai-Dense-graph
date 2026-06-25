@@ -12,7 +12,7 @@ import {
   DASHBOARD_KEYFRAMES,
 } from './dashboard-panel-parts'
 
-export default function DashboardPanel({ onOpenHierarchy, onOpenWorkflows }: { onOpenHierarchy: () => void; onOpenWorkflows?: () => void }) {
+export default function DashboardPanel({ onOpenHierarchy, onOpenWorkflows, onOpenIdGraph }: { onOpenHierarchy: () => void; onOpenWorkflows?: () => void; onOpenIdGraph?: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const data = useDashboardData()
   const edit = useAgentEdit(data.statsData, data.handleRefresh)
@@ -23,7 +23,7 @@ export default function DashboardPanel({ onOpenHierarchy, onOpenWorkflows }: { o
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#000' }}>
       <style>{DASHBOARD_KEYFRAMES}</style>
-      <DashboardHeader onOpenHierarchy={onOpenHierarchy} onOpenWorkflows={onOpenWorkflows} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onRefresh={data.handleRefresh} wsConnected={wsConnected} />
+      <DashboardHeader onOpenHierarchy={onOpenHierarchy} onOpenWorkflows={onOpenWorkflows} onOpenIdGraph={onOpenIdGraph} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} onRefresh={data.handleRefresh} wsConnected={wsConnected} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <DashboardSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} agentListProp={data.agentList} roleGroupsProp={data.roleGroups} onAgentClick={edit.handleAgentClick} />
         <DashboardMainContent data={data} onOpenWorkflows={onOpenWorkflows} />
