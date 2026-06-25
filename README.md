@@ -1,234 +1,96 @@
-# Agent Qube
+# Z.ai-Dense-graph
 
-**Agent Qube** — Visualize and manage 26 AI agents across 8 role groups with cognitive formulas, real-time WebSocket updates, and LLM-powered workflow execution.
+**Z.ai-Dense-graph** — Dense ID-graph visualization dashboard for the Z-ai ecosystem. Forked from [Agent-Qube](https://github.com/stsgs1980/Agent-Qube) v0.3.0 (26 AI agents, 8 role groups, 5 hierarchy layers).
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square)](https://tailwindcss.com)
-[![Prisma](https://img.shields.io/badge/Prisma-SQLite-2D3748?style=flat-square)](https://www.prisma.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 ---
 
-## Overview
+## What this is
 
-Agent Qube is an interactive dashboard for a multi-agent AI system. It renders a real-time, zoomable hierarchy of 26 agents organized into 8 role groups across 5 layers (L0--L4), connected by 6 edge types. The system integrates a prompting library with 20 cognitive formulas, supports LLM-powered workflow execution via the Z.ai SDK, and streams agent status changes over WebSocket.
+Z.ai-Dense-graph visualizes the **Z-ai platform brain center** as a dense ID-graph:
+- **60 IDs** across 4 modules (19 STD-* standards, 17 RULE-* rules, 6 TOOL-* tools, 24 ZAI-* skills + others)
+- **113 edges** (Related + Aligned_with)
+- **3 layout modes**: Flat (force), Clustered (by repo), Radial (by in-degree)
+- **BFS shortest-path search** between any two IDs
+- **Per-ID detail panel** with in/out edges, owning standard, related rules
 
-## Architecture
+It also inherits Agent-Qube's agent dashboard:
+- 26 AI agents across 8 role groups (Strategy / Tactics / Control / Execution / Memory / Monitoring / Communication / Learning)
+- 6 edge types (command / sync / twin / delegate / supervise / broadcast)
+- 20 cognitive formulas (CoT, ToT, GoT, CoVe, ReAct, Reflexion, ReWOO, MoA, ...)
+- LLM-powered workflow execution via z-ai-web-dev-sdk
+- Real-time WebSocket updates
 
-### 8 Role Groups
+## Architecture (4 layers)
 
-| Role Group     | Count | Agents                                          | Layer   |
-|----------------|-------|-------------------------------------------------|---------|
-| **Strategy**   | 3     | Architect, Analyst, Visionary                   | L0--L1  |
-| **Tactics**    | 3     | Coordinator, Planner, Communicator              | L1--L2  |
-| **Control**    | 3     | Inspector, Evaluator, Guard                     | L1--L2  |
-| **Execution**  | 5     | Executor-A, Executor-B, Debugger, Tester, Coder | L2--L3  |
-| **Memory**     | 3     | Archivist, RAG-Specialist, Context-Manager      | L2--L3  |
-| **Monitoring** | 3     | Observer, Alert-Operator, Diagnostician         | L2--L3  |
-| **Communication** | 3 | Gateway, Protocolist, Dispatcher                | L2--L3  |
-| **Learning**   | 3     | Trainer, Adapter, Scorer                        | L3--L4  |
+| Layer | Component | Status |
+|---|---|---|
+| **L1 — UI** | This repo (Next.js 16 dashboard) | Active |
+| **L2 — Control** | CLI terminal (planned Phase 2) | Deferred until brain center is proven |
+| **L3 — Orchestration** | `AGENT_RULES.md` (single entry point) + `guard/` (17 RULE + 4 PROC + 6 TOOL) | Active |
+| **L4 — Knowledge** | 3 submodules: `standards/` (19 STD), `guard/` (27 enforcement IDs), `zai-skills/` (36 ZAI skills) | Active |
 
-**Total: 26 agents, 8 groups, 5 hierarchy layers**
+## Submodules (6)
 
-### 6 Edge Types
+| Submodule | Source | Purpose |
+|---|---|---|
+| `standards/` | [Z-ai-standards](https://github.com/stsgs1980/Z-ai-standards) | 19 STD-* contracts + 2 verifiers |
+| `guard/` | [Z-ai-guard](https://github.com/stsgs1980/Z-ai-guard) | 17 RULE + 4 PROC + 6 TOOL (M003+M004 complete) |
+| `zai-skills/` | [Z-ai-skills](https://github.com/stsgs1980/Z-ai-skills) | 36 Z-ai-platform managed skills |
+| `.superpowers-zai/` | [Superpowers-Z.ai](https://github.com/stsgs1980/Superpowers-Z.ai) | 18 methodology skills (brainstorming, TDD, debugging, code review) |
+| `anti-hallucination-guard/` | [Anti-hallucination-guard](https://github.com/stsgs1980/Anti-hallucination-guard) | Hallucination prevention (complements zai-verify-before-claim) |
 
-| Type          | Description                                    |
-|---------------|------------------------------------------------|
-| `command`     | Direct instruction from superior to subordinate |
-| `sync`        | Bidirectional data synchronization between peers |
-| `twin`        | Mirrored agent pair for redundancy              |
-| `delegate`    | Task delegation across role groups              |
-| `supervise`   | Oversight connection from controller to executor |
-| `broadcast`   | One-to-many notification channel                |
-
-### 20 Cognitive Formulas
-
-CoT, ToT, GoT, CoVe, ReAct, Reflexion, ReWOO, MoA, and 12 more -- each mapped to specific agents via the `@stsgs/prompting` library.
-
-### 3 Layout Modes
-
-- **Radial** -- Center-out circular arrangement
-- **Hierarchy (Dagre)** -- Directed acyclic graph auto-layout
-- **Grid** -- Uniform grid placement
-
----
-
-## Tech Stack
-
-| Category        | Technology                                          |
-|-----------------|-----------------------------------------------------|
-| Framework       | Next.js 16 (App Router) + React 19                  |
-| Language        | TypeScript 5 (strict)                               |
-| Styling         | Tailwind CSS 4 + shadcn/ui (New York)               |
-| Database        | Prisma ORM + SQLite                                 |
-| Visualization   | React Flow (`@xyflow/react`) + Dagre + Recharts     |
-| Animation       | Framer Motion                                       |
-| State           | Zustand (client) + TanStack Query (server)          |
-| Real-time       | Socket.IO (WebSocket mini-service, port 3003)       |
-| AI Integration  | z-ai-web-dev-sdk (chat completions, resilience)     |
-| Forms           | React Hook Form + Zod                               |
-| Icons           | Lucide React                                        |
-
----
-
-## Features
-
-- **Interactive hierarchy visualization** -- Zoom, pan, fit-to-view, mini-map overview
-- **3 layout modes** -- Radial, Hierarchy (Dagre), Grid
-- **Real-time status transitions** via WebSocket (Socket.IO)
-- **LLM-powered workflow execution** -- `/api/interpret-prompt` to `/api/workflows/execute-llm`
-- **Agent CRUD** -- Create, edit, and delete agents from the UI
-- **Search & filter** -- By name, role group, or skills with glow highlighting
-- **Keyboard shortcuts** -- 1--8 group filter, 9 clear, Escape deselect
-- **Context menus** -- Right-click for focus, expand, details, highlight connections
-- **Detail panels** -- Agent info, tasks, cognitive formulas, skills
-- **KPI strip** -- Real-time agent counts per status
-- **Layer bands** -- L0--L4 visual hierarchy indicators
-- **Connection strength** -- Stroke width + opacity visualization
-- **7 theme presets** -- 3 dark (Champagne, Cyan Night, Zinc) + 4 light
-- **Responsive design** -- Mobile-friendly layout
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+ or [Bun](https://bun.sh)
-- Git
-
-### Installation
+## Quick start
 
 ```bash
-git clone https://github.com/stsgs1980/agent-qube.git
-cd agent-qube
-bun install
-bun run db:push
-bun run dev
+# Clone with all submodules
+git clone --recurse-submodules https://github.com/stsgs1980/Z.ai-Dense-graph.git
+cd Z.ai-Dense-graph
+
+# One-shot setup (submodules + skills + verifiers + AGENT_RULES.md print)
+bash bootstrap.sh
+
+# Install git hooks (6-phase pre-commit)
+bash install-hooks.sh
+
+# Start dev server
+npm install
+npm run dev
 ```
 
-Open the **Preview Panel** to view the application.
+## Documentation
 
-### Seed the Database
+- [`docs/MIGRATION-PLAN.md`](docs/MIGRATION-PLAN.md) — 5-phase migration from Agent-Qube fork to Z.ai-Dense-graph
+- [`AGENT_RULES.md`](AGENT_RULES.md) — single orchestration entry point for agents (L3)
+- [`docs/legacy/agent-qube-rules.md`](docs/legacy/agent-qube-rules.md) — Agent-Qube's original rules (preserved for reference)
+- [`skills/README.md`](skills/README.md) — explains what's committed vs gitignored in `skills/`
 
-Populate the database with 26 agents, 26 tasks, and 8 role groups:
+## Tech stack
 
-```bash
-curl -X POST http://localhost:3000/api/seed
-```
-
----
-
-## Project Structure
-
-```
-src/
-  app/                    # Next.js App Router pages and API routes
-  components/
-    hierarchy/            # Agent hierarchy visualization (24 files)
-    workflows/            # Workflow pipeline (18 files)
-    dashboard/            # Dashboard components (19 files)
-    ui/                   # shadcn/ui base components (37 files)
-  hooks/                  # Custom React hooks (14 hooks)
-  lib/
-    prompting/            # @stsgs/prompting library (5 modules, 21 files)
-    db.ts                 # Prisma client singleton
-  data/                   # Dashboard constants and layout recipes
-prisma/
-  schema.prisma           # 7 models (Agent, Task, Workflow, PipelineStep, ...)
-mini-services/
-  ws-service/             # WebSocket service (Socket.IO, port 3003)
-```
-
----
-
-## API Reference
-
-### Hierarchy & Stats
-
-| Endpoint             | Method | Description                        |
-|----------------------|--------|------------------------------------|
-| `/api/hierarchy`     | GET    | Full hierarchy tree with connections |
-| `/api/stats`         | GET    | Aggregated dashboard statistics    |
-| `/api/health`        | GET    | System health check                |
-| `/api/seed`          | POST   | Seed database (26 agents + tasks)  |
-
-### Agents
-
-| Endpoint              | Method          | Description                      |
-|-----------------------|-----------------|----------------------------------|
-| `/api/agents`         | GET, POST       | List all / Create agent          |
-| `/api/agents/[id]`   | GET, PUT, DELETE| Read / Update / Delete agent     |
-| `/api/agents/prompt` | POST            | Generate system prompt for agent |
-
-### Tasks
-
-| Endpoint            | Method          | Description                   |
-|---------------------|-----------------|-------------------------------|
-| `/api/tasks`        | GET, POST       | List all / Create task        |
-| `/api/tasks/[id]`  | GET, PUT, DELETE| Read / Update / Delete task   |
-
-### Workflows
-
-| Endpoint                      | Method | Description                                    |
-|-------------------------------|--------|------------------------------------------------|
-| `/api/workflows`              | GET, POST | List / Create workflows                     |
-| `/api/workflows/[id]`        | GET, PUT, DELETE | Read / Update / Delete workflow       |
-| `/api/workflows/execute`     | POST   | Execute workflow (step-by-step simulation)     |
-| `/api/workflows/execute-llm` | POST   | Execute with real LLM calls + resilience       |
-| `/api/workflows/seed`        | POST   | Seed sample workflows                          |
-
-### Prompting & AI
-
-| Endpoint               | Method | Description                                       |
-|------------------------|--------|---------------------------------------------------|
-| `/api/prompting`       | GET    | Prompting library (formulas, patterns, frameworks) |
-| `/api/interpret-prompt`| POST   | AI prompt interpretation via z-ai-web-dev-sdk     |
-| `/api/recipes`         | GET    | Layout recipes for the Layout Explorer             |
-
----
-
-## @stsgs/prompting Library
-
-Located at `src/lib/prompting/` with 5 modules across 21 files:
-
-| Module          | Contents                                                         |
-|-----------------|------------------------------------------------------------------|
-| **core**        | Types, 20 techniques, 11 frameworks, 5-layer system-prompt architect |
-| **templates**   | 12 intent templates, 12 agent role templates, 8 flow templates   |
-| **evaluation**  | 6-dimension scoring (S/A/B/C/D/F), blind comparison, CORE-EEAT  |
-| **agents**      | 20 cognitive formulas, 12 orchestration patterns, resilience     |
-| **instructions**| 6 behavioral + 4 architectural instructions (inline)             |
-
----
-
-## Design System
-
-- **Background**: Black (`#000000`) -- nodes and edges "glow" against dark canvas
-- **Accent**: Cyan (`#06B6D4`) -- monochrome + single color, no rainbow
-- **Status colors**: Active=Cyan, Idle=Slate, Paused=Amber, Standby=Indigo, Error=Rose, Offline=Zinc
-- **Glow effects**: Active nodes breathe with subtle pulsing animation
-- **High contrast**: Everything reads instantly against the dark background
-
----
-
-## Scripts
-
-| Script             | Description                        |
-|--------------------|------------------------------------|
-| `bun run dev`      | Development server on port 3000    |
-| `bun run build`    | Production build                   |
-| `bun run lint`     | ESLint check                       |
-| `bun run db:push`  | Push Prisma schema to database     |
-| `bun run db:generate` | Generate Prisma client          |
-| `bun run db:migrate`  | Run Prisma migrations            |
-| `bun run db:reset`    | Reset database                   |
-
----
+| Category | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) + React 19 |
+| Language | TypeScript 5 (strict) |
+| Styling | Tailwind CSS 4 + shadcn/ui (New York) |
+| Database | Prisma ORM + SQLite |
+| Visualization | React Flow (`@xyflow/react`) + Dagre + Recharts |
+| Animation | Framer Motion |
+| State | Zustand (client) + TanStack Query (server) |
+| Real-time | Socket.IO (WebSocket mini-service, port 3003) |
+| AI Integration | z-ai-web-dev-sdk (chat completions, resilience) |
+| Forms | React Hook Form + Zod |
+| Icons | Lucide React |
 
 ## License
 
-[MIT](LICENSE)
+MIT — see [LICENSE](LICENSE).
 
-Built with: Next.js 16 + TypeScript + Tailwind CSS + Prisma
+## Acknowledgments
+
+- Forked from [Agent-Qube](https://github.com/stsgs1980/Agent-Qube) v0.3.0
+- Brain center from [Z-ai-platform](https://github.com/stsgs1980/Z-ai-platform) v2.6.0
+- Methodology from [Superpowers](https://github.com/obra/superpowers) v5.1.0 (Z.ai-adapted fork)

@@ -1,6 +1,6 @@
 {
-  "name": "agent-qube",
-  "version": "0.3.0",
+  "name": "z-ai-dense-graph",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
@@ -95,5 +95,12 @@
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.5",
     "typescript": "^5"
-  }
+  },
+  "description": "Z.ai-Dense-graph: dense ID-graph visualization dashboard. Forked from Agent-Qube v0.3.0. Integrates Z-ai standards/guard/skills/AGENT_RULES as brain center + Superpowers methodology.",
+  "keywords": [
+    "z-ai",
+    "dense-graph",
+    "id-graph",
+    "brain-center"
+  ]
 }
