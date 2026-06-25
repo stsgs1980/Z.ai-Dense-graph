@@ -300,7 +300,7 @@ All 5 phases executed end-to-end. Commits on `main`:
 - Click any node → detail panel on right with metadata + in/out edges
 - Click neighbor in detail panel → navigates to that ID
 - BFS path search: pick target from dropdown, click Go → path highlights on canvas
-- KPI strip shows: 60 IDs / 113 edges / 19 STD / 17 RULE / 4 PROC / 6 TOOL / 24 ZAI / top hub / isolated
+- KPI strip shows: 61 IDs / 114 edges / 19 STD / 17 RULE / 4 PROC / 6 TOOL / 25 ZAI / top hub / isolated
 - Pre-commit hook enforces 6 phases locally (HARD on V01-V11 + G01-G15, SOFT on rest)
 - CI runs same verifiers + build on every push/PR
 
@@ -309,5 +309,5 @@ All 5 phases executed end-to-end. Commits on `main`:
 - HARD CI enforcement (currently SOFT until pre-existing TS errors cleaned)
 - Realtime ID-graph updates via WebSocket (currently static snapshot from seed)
 - Edit ID metadata from UI (currently read-only)
-- Add 24 ZAI-* skill nodes (currently only 19 STD + 17 RULE = 36; seed pulls from id-graph-full.json which only has 60)
+- ~~Add 24 ZAI-* skill nodes (currently only 19 STD + 17 RULE = 36; seed pulls from id-graph-full.json which only has 60)~~ **DONE 2026-06-25**: id-graph-full.json already had 24 ZAI-* nodes; added the missing 25th (ZAI-STS-008 / skill-creator, whose SKILL.md frontmatter was missing the `id:` field, recovered from INDEX.md catalog override). Graph now has 61 nodes / 114 edges / 25 ZAI skills. See commit `feat(id-graph): add ZAI-STS-008 (skill-creator) — 25th ZAI node`.
 - CLI terminal (Phase 2 of original architecture — deferred until brain center proven)

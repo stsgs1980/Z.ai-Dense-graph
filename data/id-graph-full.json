@@ -162,8 +162,8 @@
       "title": "Skill Format & Identification",
       "prefix": "STD",
       "out_deg": 4,
-      "in_deg": 25,
-      "total_deg": 29
+      "in_deg": 26,
+      "total_deg": 30
     },
     {
       "id": "STD-DESIGN-001",
@@ -659,6 +659,17 @@
       "out_deg": 1,
       "in_deg": 3,
       "total_deg": 4
+    },
+    {
+      "id": "ZAI-STS-008",
+      "repo": "skills",
+      "file": "zai-skills/skills/skill-creator/SKILL.md",
+      "fmt": "frontmatter",
+      "title": "Skill Creator",
+      "prefix": "ZAI",
+      "out_deg": 1,
+      "in_deg": 0,
+      "total_deg": 1
     }
   ],
   "links": [
@@ -1452,22 +1463,29 @@
       "src_repo": "skills",
       "tgt_repo": "standards",
       "type": "aligned"
+    },
+    {
+      "src": "ZAI-STS-008",
+      "tgt": "STD-SKILL-001",
+      "src_repo": "skills",
+      "tgt_repo": "standards",
+      "type": "related"
     }
   ],
   "summary": {
-    "ids_total": 60,
-    "related_edges": 106,
+    "ids_total": 61,
+    "related_edges": 107,
     "aligned_edges": 7,
-    "total_edges": 113,
+    "total_edges": 114,
     "prefixes": {
       "STD": 19,
       "RULE": 17,
-      "ZAI": 24
+      "ZAI": 25
     },
     "by_repo": {
       "standards": 19,
       "guard": 17,
-      "skills": 24
+      "skills": 25
     }
   }
 }

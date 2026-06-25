@@ -1,7 +1,7 @@
 /**
  * GET /api/id-graph
  *
- * Returns the full ID-graph: 60 nodes + 113 edges + latest snapshot.
+ * Returns the full ID-graph: 61 nodes + 114 edges + latest snapshot.
  */
 
 import { NextResponse } from 'next/server'

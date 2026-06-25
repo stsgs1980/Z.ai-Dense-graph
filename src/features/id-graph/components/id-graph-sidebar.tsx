@@ -16,7 +16,7 @@ interface Props {
 const REPO_LABELS: Record<IdRepo, string> = {
   standards: 'standards/ (19 STD)',
   guard: 'guard/ (17 RULE + 4 PROC + 6 TOOL)',
-  'zai-skills': 'zai-skills/ (24 ZAI)',
+  'zai-skills': 'zai-skills/ (25 ZAI)',
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -69,7 +69,7 @@ export function IdGraphSidebar({ nodes, selectedId, onSelect }: Props) {
           Brain Center
         </h2>
         <p className="text-[10px] text-slate-500 mt-1">
-          60 IDs / 113 edges / 4 modules
+          61 IDs / 114 edges / 3 modules
         </p>
       </div>
 

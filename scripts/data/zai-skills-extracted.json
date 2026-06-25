@@ -1,0 +1,290 @@
+[
+  {
+    "id": "ZAI-ARCH-002",
+    "name": "anti-monolith",
+    "version": "1.0",
+    "description": "Modular architecture enforcement. Automatically activates when files exceed size limits, components have too many hooks, or code structure violates FSD/layer boundaries. Refactors monoliths into compo",
+    "related": [
+      "STD-SKILL-001",
+      "ZAI-ARCH-001"
+    ],
+    "file": "zai-skills/skills/anti-monolith/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-DEV-002",
+    "name": "commit-work",
+    "version": "1.0",
+    "description": "Create high-quality git commits: review/stage intended changes, split into logical commits, and write clear commit messages (including Conventional Commits). Use when the user asks to commit, craft a ",
+    "related": [
+      "STD-SKILL-001",
+      "STD-ERR-002",
+      "STD-GIT-001",
+      "RULE-MONOLITH-002",
+      "RULE-MONOLITH-004"
+    ],
+    "file": "zai-skills/skills/commit-work/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-SESSION-002",
+    "name": "context-consolidation",
+    "version": "1.0",
+    "description": ">",
+    "related": [
+      "STD-SKILL-001",
+      "ZAI-SESSION-001"
+    ],
+    "file": "zai-skills/skills/context-consolidation/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-DEV-003",
+    "name": "database-schema-designer",
+    "version": "1.0",
+    "description": "Design robust, scalable database schemas for SQL and NoSQL databases. Provides normalization guidelines, indexing strategies, migration patterns, constraint design, and performance optimization. Ensur",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/database-schema-designer/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-FS-001",
+    "name": "folder-indexer",
+    "version": "1.0",
+    "description": "Create and manage folder indexes for easy navigation. Scans directories and creates _index.json with file descriptions, tags, and categories. Use when you need to organize and search through large col",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/folder-indexer/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-STS-004",
+    "name": "frontend-styling-expert_sts",
+    "version": "1.0",
+    "description": "CSS, styling, responsive design, accessibility, and UI/UX polish specialist. Use this skill when you need help with CSS, styling frameworks, responsive design, UI/UX implementation, animations, layout",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/frontend-styling-expert_sts/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-MEM-003",
+    "name": "memory-delete",
+    "version": "1.0",
+    "description": "Delete entries from ZCode memory system. Use when you need to remove outdated or incorrect entries from the knowledge base.",
+    "related": [
+      "STD-SKILL-001",
+      "ZAI-MEM-001"
+    ],
+    "file": "zai-skills/skills/memory-delete/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-MEM-004",
+    "name": "memory-export",
+    "version": "1.0",
+    "description": "Export entries from ZCode memory system to JSON. Use when you need to backup memory or transfer knowledge between systems.",
+    "related": [
+      "STD-SKILL-001",
+      "ZAI-MEM-001"
+    ],
+    "file": "zai-skills/skills/memory-export/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-MEM-002",
+    "name": "memory-query",
+    "version": "1.0",
+    "description": "Search the ZCode memory system using semantic search. Use when you need to find relevant sessions, knowledge, patterns, or templates from previous work.",
+    "related": [
+      "STD-SKILL-001",
+      "ZAI-MEM-001"
+    ],
+    "file": "zai-skills/skills/memory-query/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-MEM-001",
+    "name": "memory-store",
+    "version": "1.0",
+    "description": "Store information in the ZCode memory system (ChromaDB) for semantic search. Use when you need to save sessions, knowledge, patterns, project structures, or templates for future reference.",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/memory-store/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-ARCH-001",
+    "name": "mermaid-diagrams",
+    "version": "1.0",
+    "description": "Comprehensive guide for creating software diagrams using Mermaid syntax. Use when users need to create, visualize, or document software through diagrams including class diagrams (domain modeling, obje",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/mermaid-diagrams/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-STS-003",
+    "name": "performance-code-generator_sts",
+    "version": "1.0",
+    "description": "Generate high-performance code with optimization for algorithmic complexity, cache locality, memory allocations, and parallelism. Use this skill when the user asks for performant code, to optimize exi",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/performance-code-generator_sts/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-STS-005",
+    "name": "phi-layout_sts",
+    "version": "3.0",
+    "description": "Proportional CSS Grid layouts using phi and Fibonacci spacing. Use when users want bento layouts, masonry grids, asymmetric grids, timeline layouts, staggered layouts, Linear/Vercel-style zeitgeist pa",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/phi-layout_sts/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-DEV-001",
+    "name": "project-clone",
+    "version": "1.0",
+    "description": "Smart project cloning with user confirmation",
+    "related": [
+      "STD-SKILL-001",
+      "ZAI-DEV-002",
+      "ZAI-DEV-003"
+    ],
+    "file": "zai-skills/skills/project-clone/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-STS-001",
+    "name": "prompt-engineering_sts",
+    "version": "1.1",
+    "description": ">",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/prompt-engineering_sts/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-QA-001",
+    "name": "qa-test-planner",
+    "version": "1.0",
+    "description": "Generate comprehensive test plans, manual test cases, regression test suites, and bug reports for QA engineers. Includes Figma MCP integration for design validation.",
+    "related": [
+      "STD-SKILL-001",
+      "STD-TEST-001"
+    ],
+    "file": "zai-skills/skills/qa-test-planner/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-REQ-001",
+    "name": "requirements-clarity",
+    "version": "1.0",
+    "description": "Clarify ambiguous requirements through focused dialogue before implementation. Use when requirements are unclear, features are complex (>2 days), or involve cross-team coordination. Ask two core quest",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/requirements-clarity/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-SESSION-003",
+    "name": "session-experience",
+    "version": "4.0",
+    "description": "Extract and store session EXPERIENCE (not logs!) to ChromaDB. AI-powered extraction via GLM-4.5 — paste session text, get individual lessons. 1 lesson = 1 ChromaDB record for precise semantic search a",
+    "related": [
+      "STD-SKILL-001",
+      "ZAI-SESSION-001"
+    ],
+    "file": "zai-skills/skills/session-experience/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-SESSION-001",
+    "name": "session-log",
+    "version": "1.1",
+    "description": "Auto-log session activity to ChromaDB. Logs what was done, what tools were used, what files were changed, what errors occurred. Always active — every session gets a log entry. This is NOT experience (",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/session-log/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-META-001",
+    "name": "skill-id-system",
+    "version": "1.0",
+    "description": "ID system for Z.ai Agent Toolkit skills",
+    "related": [],
+    "file": "zai-skills/skills/skill-id-system/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-STS-002",
+    "name": "sync-toolkit_sts",
+    "version": "1.0",
+    "description": ">",
+    "related": [
+      "STD-SKILL-001",
+      "ZAI-STS-001"
+    ],
+    "file": "zai-skills/skills/sync-toolkit_sts/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-STS-007",
+    "name": "workflow-discipline_sts",
+    "version": "2.0",
+    "description": "MANDATORY workflow discipline rules. This skill MUST auto-activate at the start of every session and before every task. Enforces 8 non-negotiable rules: 1) Explain WHY before HOW, 2) One task = one co",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/workflow-discipline_sts/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-META-002",
+    "name": "zai-skill-registry",
+    "version": "1.2",
+    "description": "Reference registry for the Z.ai skill ID system. Use when you need to look up or assign a ZAI-XXX-NNN ID to a skill, find the next available number in a domain, or consult the list of reserved domains",
+    "related": [],
+    "file": "zai-skills/skills/zai-skill-registry/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-STS-006",
+    "name": "zai-ui-composer_sts",
+    "version": "1.1.2",
+    "description": [
+      "anti-monolith: System skill (Z.ai sandbox, not in toolkit). Decomposes code; zai-ui-composer composes UI."
+    ],
+    "related": [
+      "STD-SKILL-001",
+      "ZAI-STS-007"
+    ],
+    "file": "zai-skills/skills/zai-ui-composer_sts/SKILL.md",
+    "repo": "zai-skills"
+  },
+  {
+    "id": "ZAI-STS-008",
+    "name": "skill-creator",
+    "version": "1.0",
+    "description": "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.",
+    "related": [
+      "STD-SKILL-001"
+    ],
+    "file": "zai-skills/skills/skill-creator/SKILL.md",
+    "repo": "zai-skills"
+  }
+]

@@ -18,14 +18,14 @@ export function IdGraphKpiStrip({ snapshot, topHubs, isolated }: Props) {
 
   return (
     <div className="h-11 bg-slate-950 border-b border-slate-800 flex items-center px-4 gap-6 text-xs">
-      <Stat label="IDs" value={String(counts.total ?? 60)} color="cyan" />
-      <Stat label="Edges" value={String(edges.total ?? 113)} color="cyan" />
+      <Stat label="IDs" value={String(counts.total ?? 61)} color="cyan" />
+      <Stat label="Edges" value={String(edges.total ?? 114)} color="cyan" />
       <Divider />
       <Stat label="STD" value={String(counts.STD ?? 19)} color="cyan" />
       <Stat label="RULE" value={String(counts.RULE ?? 17)} color="purple" />
       <Stat label="PROC" value={String(counts.PROC ?? 4)} color="pink" />
       <Stat label="TOOL" value={String(counts.TOOL ?? 6)} color="amber" />
-      <Stat label="ZAI" value={String(counts.ZAI ?? 24)} color="emerald" />
+      <Stat label="ZAI" value={String(counts.ZAI ?? 25)} color="emerald" />
       <Divider />
       <Stat
         label="Top hub"
